@@ -1,0 +1,53 @@
+{
+	"mcpServers": {
+		"new-york-dev": {
+			"url": "https://nyc-mcp-dev.up.railway.app/mcp"
+		},
+		"openalex-prod": {
+			"url": "https://map-openalex-dev.up.railway.app/mcp"
+		},
+		"a2a-js-repo": {
+			"url": "https://gitmcp.io/a2aproject/a2a-js"
+		},
+		"gobernai-dev": {
+			"command": "bunx",
+			"args": [
+				"-y",
+				"@supabase/mcp-server-supabase@latest",
+				"--read-only",
+				"--project-ref=qklwlyoenlffxnwrkxuc"
+			],
+			"env": {
+				"SUPABASE_ACCESS_TOKEN": "sbp_a2ba542aca5859350891b52cfeb590c4516f6bb9"
+			}
+		},
+		"express-zod-api-repo": {
+			"url": "https://gitmcp.io/RobinTail/express-zod-api"
+		},
+		"context7": {
+			"url": "https://mcp.context7.com/mcp",
+			"headers": {
+				"CONTEXT7_API_KEY": "ctx7sk-d47eacb8-4599-47b3-b1f6-90aa5fed21f2"
+			}
+		},
+		"internal-research": {
+			"command": "bun",
+			"args": ["run", "scripts/mcp-internal-research.ts"],
+			"cwd": "/home/snor/job/gobernAI/a2a-ts",
+			"description": "MCP para búsqueda en base de conocimiento vectorial, NYC Open Data y OpenAlex"
+		},
+		"bruno-runner": {
+			"command": "npx",
+			"args": ["-y", "bruno-mcp"]
+		},
+		"toon-format-repo": {
+			"url": "https://gitmcp.io/johannschopplich/toon"
+		},
+		"a2a-ai-provider-repo": {
+			"url": "https://gitmcp.io/DracoBlue/a2a-ai-provider"
+		},
+		"pino-http Docs": {
+			"url": "https://gitmcp.io/pinojs/pino-http"
+		}
+	}
+}

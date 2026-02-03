@@ -1,0 +1,37 @@
+{
+  "name": "@bumpack/cli",
+  "type": "module",
+  "module": "src/index.ts",
+  "bin": {
+    "bunp": "./dist/index.js"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "author": {
+    "name": "leomerida15",
+    "email": "dimasmerida15@gmail.com",
+    "url": "https://github.com/leomerida15"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leomerida15/bunpack"
+  },
+  "scripts": {
+    "build": "bun run bunpack.build.ts",
+    "dev": "bun run bunpack.watch.ts",
+    "start": "bun run dist/index.js",
+    "type:check": "bun run -b tsc --noEmit",
+    "type:watch": "bun run -b tsc --noEmit --watch"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "enquirer": "^2.4.1"
+  },
+  "private": true
+}
