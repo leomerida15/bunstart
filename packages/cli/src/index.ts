@@ -1,13 +1,12 @@
-import { InitCommandFactory } from './modules/init/infrastructure/factories/InitCommandFactory';
-import { MonoCommandFactory } from './modules/mono/infrastructure/factories/MonoCommandFactory';
+import { InitCommandFactory } from './modules/init/infra/factories/InitCommandFactory';
+import { MonoCommandFactory } from './modules/mono/infra/factories/MonoCommandFactory';
 
 /**
  * Displays the help message for the CLI.
- *
  */
 function showHelp() {
 	console.log(`
-bunstack CLI - Project Initialization and Monorepo Management Tool
+bunstart CLI - Project Initialization and Monorepo Management Tool
 
 Usage:
   buns <command> [options]
@@ -45,7 +44,7 @@ Examples:
  */
 function showVersion(): void {
 	// Version could be read from package.json in the future
-	console.log('bunstack CLI v0.1.0');
+	console.log('bunstart CLI v0.1.0');
 }
 
 /**

@@ -1,4 +1,4 @@
-# bunp
+# bunstart
 
 To install dependencies:
 

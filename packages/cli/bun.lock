@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "bunp",
+      "name": "bunstart",
       "dependencies": {
         "enquirer": "^2.4.1",
       },

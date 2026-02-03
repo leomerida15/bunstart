@@ -16,6 +16,6 @@ Objetivo, este proyecto tiene como objetivo ser un set de herramientas para mane
 - FRONT con react.
 - librerias.
 
-todo esto debe ser empaquetado usando el metodo build de bun.js. todo enpaquetado se manejara desde bunstack.build.ts y bunstack.watch.ts para manejar el enpaquetado y deteccion de cambios.
+todo esto debe ser empaquetado usando el metodo build de bun.js. todo enpaquetado se manejara desde bunstart.build.ts y bunstart.watch.ts para manejar el enpaquetado y deteccion de cambios.
 
 usaremos el dirtectorio context en .agent para manejar archivos .md de persistencia de contexto.

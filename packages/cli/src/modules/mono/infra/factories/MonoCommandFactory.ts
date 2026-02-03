@@ -1,4 +1,4 @@
-import { MonoCommand } from '../../application/MonoCommand';
+import { MonoCommand } from '../../app/MonoCommand';
 
 /**
  * Factory for creating MonoCommand instances with proper dependency injection.

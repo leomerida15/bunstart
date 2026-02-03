@@ -35,7 +35,7 @@ export class MonoCommand {
 	 * @private
 	 */
 	private showUsage(): void {
-		console.log('\nUsage: bunp mono <subcommand> [options]');
-		console.log('       bunp mono <packageName> [script]');
+		console.log('\nUsage: bunstart mono <subcommand> [options]');
+		console.log('       bunstart mono <packageName> [script]');
 	}
 }

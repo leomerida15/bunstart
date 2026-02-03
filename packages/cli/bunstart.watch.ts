@@ -1,19 +1,19 @@
 import { watch } from "node:fs";
 import { resolve } from "node:path";
-import { build } from "./bunstack.build";
+import { build } from "./bunstart.build";
 
 /**
  * Watch script for the CLI package.
  *
  * Execute this script using Bun CLI:
- *   bun run bunstack.watch.ts
+ *   bun run bunstart.watch.ts
  *
  * Or via npm script:
  *   bun run dev
  *
  * This script watches for changes in src/index.ts and automatically
  * rebuilds the project when changes are detected using the centralized
- * build function from bunstack.build.ts.
+ * build function from bunstart.build.ts.
  */
 
 /**

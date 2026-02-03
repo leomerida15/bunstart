@@ -1,6 +1,6 @@
-# CLI Plan - bunstack
+# CLI Plan - bunstart
 
-This document outlines the development plan for the `bunstack` CLI tool.
+This document outlines the development plan for the `bunstart` CLI tool.
 
 ## Init Command Development Plan
 
@@ -21,4 +21,4 @@ The `init` command is designed to be a superset of `bun init`, providing a user-
 1.  **Enhance Selection UI**: Update `packages/cli/src/command/init/init.ts` to include all templates defined in `cli.md`.
 2.  **Native Integration**: Use `Bun.spawn` to execute `bun init` passed through to the user.
 3.  **Template Scaffolding**: Create a utility to copy template files or generate them dynamically based on the selection.
-4.  **Monorepo Support**: Specifically handle the monorepo setup as it's a core feature of `bunstack`.
+4.  **Monorepo Support**: Specifically handle the monorepo setup as it's a core feature of `bunstart`.

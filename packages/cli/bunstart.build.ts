@@ -2,7 +2,7 @@
  * Build script for the CLI package.
  *
  * Execute this script using Bun CLI:
- *   bun run bunstack.build.ts
+ *   bun run bunstart.build.ts
  *
  * Or via npm script:
  *   bun run build
@@ -67,8 +67,8 @@ export async function build(): Promise<void> {
 
 // Execute build if script is run directly (not imported)
 // Check if this file is being executed directly by checking if it's the main module
-const isMainModule = process.argv[1]?.endsWith('bunstack.build.ts') ||
-    process.argv[1]?.endsWith('bunstack.build.js');
+const isMainModule = process.argv[1]?.endsWith('bunstart.build.ts') ||
+    process.argv[1]?.endsWith('bunstart.build.js');
 
 if (isMainModule) {
     build().catch((error) => {

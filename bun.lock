@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "bunstack",
+      "name": "bunstart",
       "dependencies": {
         "zod": "^4.3.5",
       },
@@ -46,7 +46,7 @@
     "packages/cli": {
       "name": "@bumpack/cli",
       "bin": {
-        "bunp": "./dist/index.js",
+        "bunstart": "./dist/index.js",
       },
       "dependencies": {
         "enquirer": "^2.4.1",

@@ -1,5 +1,5 @@
-import { InitCommand } from '../../application/InitCommand';
-import { SelectTemplateUseCase } from '../../application/use-cases/SelectTemplateUseCase';
+import { InitCommand } from '../../app/InitCommand';
+import { SelectTemplateUseCase } from '../../app/use-cases/SelectTemplateUseCase';
 import { EnquirerAdapter } from '../adapters/EnquirerAdapter';
 
 /**

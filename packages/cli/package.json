@@ -3,7 +3,7 @@
   "type": "module",
   "module": "src/index.ts",
   "bin": {
-    "bunp": "./dist/index.js"
+    "bunstart": "./dist/index.js"
   },
   "exports": {
     ".": "./dist/index.js"
@@ -15,11 +15,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/leomerida15/bunstack"
+    "url": "https://github.com/leomerida15/bunstart"
   },
   "scripts": {
-    "build": "bun run bunstack.build.ts",
-    "dev": "bun run bunstack.watch.ts",
+    "build": "bun run bunstart.build.ts",
+    "dev": "bun run bunstart.watch.ts",
     "start": "bun run dist/index.js",
     "type:check": "bun run -b tsc --noEmit",
     "type:watch": "bun run -b tsc --noEmit --watch"
