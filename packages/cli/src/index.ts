@@ -1,5 +1,5 @@
-import { InitCommandFactory } from './infrastructure/factories/InitCommandFactory';
-import { MonoCommandFactory } from './infrastructure/factories/MonoCommandFactory';
+import { InitCommandFactory } from './modules/init/infrastructure/factories/InitCommandFactory';
+import { MonoCommandFactory } from './modules/mono/infrastructure/factories/MonoCommandFactory';
 
 /**
  * Displays the help message for the CLI.
@@ -10,7 +10,7 @@ function showHelp() {
 bunstack CLI - Project Initialization and Monorepo Management Tool
 
 Usage:
-  bunp <command> [options]
+  buns <command> [options]
 
 Commands:
   init                    Initialize a new project with a template
@@ -30,11 +30,11 @@ Options:
   -v, --version           Show version information
 
 Examples:
-  bunp init
-  bunp mono my-app
-  bunp mono generate app new-app
-  bunp mono generate pkg shared-utils
-  bunp mono start
+  buns init
+  buns mono my-app
+  buns mono generate app new-app
+  buns mono generate pkg shared-utils
+  buns mono start
 `);
 }
 
@@ -106,7 +106,7 @@ async function main(): Promise<void> {
 
 			default:
 				console.error(`Error: Unknown command "${command}".`);
-				console.log('\nRun "bunp --help" to see available commands.');
+				console.log('\nRun "buns --help" to see available commands.');
 				process.exit(1);
 		}
 	} catch (error) {
