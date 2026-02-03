@@ -1,4 +1,4 @@
-# bunpack
+# bunstack
 
 To install dependencies:
 

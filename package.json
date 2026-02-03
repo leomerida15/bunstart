@@ -1,7 +1,7 @@
 {
   "type": "module",
   "module": "index.ts",
-  "name": "@bunpack",
+  "name": "@bunstack",
   "private": true,
   "workspaces": [
     "packages/*",

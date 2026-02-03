@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "bunpack",
+      "name": "bunstack",
       "dependencies": {
         "zod": "^4.3.5",
       },

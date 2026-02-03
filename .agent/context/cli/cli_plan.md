@@ -1,6 +1,6 @@
-# CLI Plan - Bunpack
+# CLI Plan - bunstack
 
-This document outlines the development plan for the `bunpack` CLI tool.
+This document outlines the development plan for the `bunstack` CLI tool.
 
 ## Init Command Development Plan
 

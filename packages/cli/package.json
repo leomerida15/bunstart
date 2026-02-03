@@ -15,11 +15,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/leomerida15/bunpack"
+    "url": "https://github.com/leomerida15/bunstack"
   },
   "scripts": {
-    "build": "bun run bunpack.build.ts",
-    "dev": "bun run bunpack.watch.ts",
+    "build": "bun run bunstack.build.ts",
+    "dev": "bun run bunstack.watch.ts",
     "start": "bun run dist/index.js",
     "type:check": "bun run -b tsc --noEmit",
     "type:watch": "bun run -b tsc --noEmit --watch"

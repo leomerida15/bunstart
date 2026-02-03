@@ -7,7 +7,7 @@ import { MonoCommandFactory } from './infrastructure/factories/MonoCommandFactor
  */
 function showHelp() {
 	console.log(`
-Bunpack CLI - Project Initialization and Monorepo Management Tool
+bunstack CLI - Project Initialization and Monorepo Management Tool
 
 Usage:
   bunp <command> [options]
@@ -45,7 +45,7 @@ Examples:
  */
 function showVersion(): void {
 	// Version could be read from package.json in the future
-	console.log('Bunpack CLI v0.1.0');
+	console.log('bunstack CLI v0.1.0');
 }
 
 /**
