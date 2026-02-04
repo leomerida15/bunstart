@@ -1,5 +1,5 @@
 {
-  "name": "@bumpack/cli",
+  "name": "@bunstart/cli",
   "type": "module",
   "module": "src/index.ts",
   "bin": {

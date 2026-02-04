@@ -1,5 +1,7 @@
 import { InitCommandFactory } from './modules/init/infra/factories/InitCommandFactory';
 import { MonoCommandFactory } from './modules/mono/infra/factories/MonoCommandFactory';
+import { RepoStateUseCasesFactory } from './modules/repo-state/infra/factories/RepoStateUseCasesFactory';
+import { isWorkspaceAlias } from './modules/repo-state/domain/entities/RepoState';
 
 /**
  * Displays the help message for the CLI.
@@ -10,13 +12,15 @@ bunstart CLI - Project Initialization and Monorepo Management Tool
 
 Usage:
   buns <command> [options]
+  buns <appAlias|pkgAlias> [...commands]   Run command in a workspace (e.g. buns app-example build)
 
 Commands:
   init                    Initialize a new project with a template
                           Templates: monorepo, api-rest, frontend-react, library
 
   mono <subcommand>       Manage monorepo packages and apps
-    <appName|libName>     Select a package or app to work with
+    add app <name>        Add a new app to the monorepo
+    add pkg <name>        Add a new package to the monorepo
     start                 Run start script for selected package/app
     dev                   Run dev script for selected package/app
     build                 Run build script for selected package/app
@@ -30,9 +34,9 @@ Options:
 
 Examples:
   buns init
-  buns mono my-app
-  buns mono generate app new-app
-  buns mono generate pkg shared-utils
+  buns app-example build
+  buns mono add app my-app
+  buns mono add pkg shared-utils
   buns mono start
 `);
 }
@@ -103,10 +107,41 @@ async function main(): Promise<void> {
 				await handleMonoCommand(commandArgs);
 				break;
 
-			default:
-				console.error(`Error: Unknown command "${command}".`);
-				console.log('\nRun "buns --help" to see available commands.');
-				process.exit(1);
+			default: {
+				if (!command) {
+					console.error('Error: No command provided.');
+					process.exit(1);
+				}
+				// Try run: buns <alias> [...commands] when in a monorepo with bunstart.config
+				const loadRepoState = RepoStateUseCasesFactory.createLoadRepoStateUseCase();
+				const state = await loadRepoState.execute(process.cwd());
+				if (state && isWorkspaceAlias(state, command)) {
+					const cwd = process.cwd();
+					// Ensure dependencies are built before build/dev
+					const isBuildOrDev =
+						commandArgs[0] === 'build' ||
+						commandArgs[0] === 'dev' ||
+						(commandArgs[0] === 'run' &&
+							(commandArgs[1] === 'build' || commandArgs[1] === 'dev'));
+					if (isBuildOrDev) {
+						const ensureDepsBuilt =
+							RepoStateUseCasesFactory.createEnsureDepsBuiltUseCase();
+						await ensureDepsBuilt.execute(cwd, command);
+					}
+					const runInWorkspace = RepoStateUseCasesFactory.createRunInWorkspaceUseCase();
+					// Pass through; if user said "buns app-example build", we need "run build"
+					const runArgs =
+						commandArgs.length > 0 && commandArgs[0] !== 'run'
+							? ['run', ...commandArgs]
+							: commandArgs;
+					await runInWorkspace.execute(cwd, command, runArgs);
+				} else {
+					console.error(`Error: Unknown command "${command}".`);
+					console.log('\nRun "buns --help" to see available commands.');
+					process.exit(1);
+				}
+				break;
+			}
 		}
 	} catch (error) {
 		console.error('\n❌ An error occurred:');

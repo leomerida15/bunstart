@@ -11,6 +11,7 @@
  * with minification and source maps enabled, and adds a shebang to
  * the output file for direct execution.
  */
+import { cpSync, mkdirSync, existsSync } from "node:fs";
 
 /**
  * Build configuration for the CLI package.
@@ -57,6 +58,12 @@ export async function build(): Promise<void> {
             : buildConfig.shebang + content;
 
         await Bun.write(buildConfig.outputPath, contentWithShebang);
+
+        // Copy templates to dist for runtime resolution
+        const templatesSrc = "src/utils/template";
+        const templatesDest = "dist/utils/template";
+        if (!existsSync(templatesDest)) mkdirSync(templatesDest, { recursive: true });
+        cpSync(templatesSrc, templatesDest, { recursive: true });
 
         console.log("Build completed 🟢");
     } catch (error) {

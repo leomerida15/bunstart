@@ -35,4 +35,12 @@ export interface UserInterfacePort {
 	 * @throws {Error} If the prompt operation fails
 	 */
 	selectTemplate(templates: Template[], message: string): Promise<SelectionResult>;
+
+	/**
+	 * Prompts the user to enter a monorepo alias.
+	 *
+	 * @param {string} [message] - The prompt message to display
+	 * @returns {Promise<string | null>} The alias string, or null if cancelled
+	 */
+	askAlias(message?: string): Promise<string | null>;
 }

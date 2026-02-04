@@ -1,0 +1,25 @@
+{
+  "name": "@test/pkg-example",
+  "version": "0.1.0",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "start": "bun run -b dist/index.js",
+    "build": "bun run -b bunstart.build.ts",
+    "watch": "bun run -b bunstart.watch.ts",
+    "dev": "bun run -b bunstart.watch.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

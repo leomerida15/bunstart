@@ -2,6 +2,10 @@ import { Template } from '../../domain/entities/Template';
 import type { UserInterfacePort } from '../../domain/ports/UserInterface.port';
 import { TemplateDefinitions } from '../../domain/services/TemplateDefinitions';
 
+export interface SelectTemplateUseCaseProps {
+	userInterface: UserInterfacePort;
+}
+
 /**
  * Use case for selecting a project template.
  *
@@ -27,9 +31,9 @@ export class SelectTemplateUseCase {
 	/**
 	 * Creates a new SelectTemplateUseCase instance.
 	 *
-	 * @param {UserInterfacePort} userInterface - The user interface port implementation
+	 * @param {SelectTemplateUseCaseProps} props - The dependencies
 	 */
-	constructor(userInterface: UserInterfacePort) {
+	constructor({ userInterface }: SelectTemplateUseCaseProps) {
 		this.userInterface = userInterface;
 	}
 

@@ -1,4 +1,8 @@
 import { MonoCommand } from '../../app/MonoCommand';
+import { RepoStateUseCasesFactory } from '../../../repo-state/infra/factories/RepoStateUseCasesFactory';
+import { NodeFilesystemAdapter } from '../../../init/infra/adapters/NodeFilesystemAdapter';
+import { PackageJsonAdapter } from '../../../init/infra/adapters/PackageJsonAdapter';
+import { MonorepoScaffolderAdapter } from '../../../init/infra/adapters/MonorepoScaffolderAdapter';
 
 /**
  * Factory for creating MonoCommand instances with proper dependency injection.
@@ -16,7 +20,18 @@ export class MonoCommandFactory {
 	 * @returns {MonoCommand} A fully configured MonoCommand instance
 	 */
 	public static create(): MonoCommand {
-		// Future: Inyectar casos de uso (ListWorkspaces, RunScript, etc.)
-		return new MonoCommand();
+		const filesystem = new NodeFilesystemAdapter();
+		const packageJson = new PackageJsonAdapter();
+		const scaffolder = new MonorepoScaffolderAdapter({ filesystem, packageJson });
+		return new MonoCommand({
+			loadRepoState: RepoStateUseCasesFactory.createLoadRepoStateUseCase(),
+			addApp: RepoStateUseCasesFactory.createAddAppUseCase(),
+			addPackage: RepoStateUseCasesFactory.createAddPackageUseCase(),
+			ensureDepsBuilt: RepoStateUseCasesFactory.createEnsureDepsBuiltUseCase(),
+			runInWorkspace: RepoStateUseCasesFactory.createRunInWorkspaceUseCase(),
+			syncDependsOn:
+				RepoStateUseCasesFactory.createSyncDependsOnFromPackageJsonUseCase(),
+			scaffolder
+		});
 	}
 }

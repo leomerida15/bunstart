@@ -3,7 +3,31 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "repo",
+      "name": "test",
+      "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
+    "apps/app-example": {
+      "name": "@test/app-example",
+      "version": "0.1.0",
+      "dependencies": {
+        "@test/pkg-example": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
+    "packages/pkg-example": {
+      "name": "@test/pkg-example",
+      "version": "0.1.0",
       "devDependencies": {
         "@types/bun": "latest",
       },
@@ -13,6 +37,10 @@
     },
   },
   "packages": {
+    "@test/app-example": ["@test/app-example@workspace:apps/app-example"],
+
+    "@test/pkg-example": ["@test/pkg-example@workspace:packages/pkg-example"],
+
     "@types/bun": ["@types/bun@1.3.8", "", { "dependencies": { "bun-types": "1.3.8" } }, "sha512-3LvWJ2q5GerAXYxO2mffLTqOzEu5qnhEAlh48Vnu8WQfnmSwbgagjGZV6BoHKJztENYEDn6QmVd949W4uESRJA=="],
 
     "@types/node": ["@types/node@25.2.0", "", { "dependencies": { "undici-types": "~7.16.0" } }, "sha512-DZ8VwRFUNzuqJ5khrvwMXHmvPe+zGayJhr2CDNiKB1WBE1ST8Djl00D0IC4vvNmHMdj6DlbYRIaFE7WHjlDl5w=="],

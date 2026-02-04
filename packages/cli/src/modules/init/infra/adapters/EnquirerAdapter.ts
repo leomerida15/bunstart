@@ -103,4 +103,34 @@ export class EnquirerAdapter implements UserInterfacePort {
 			);
 		}
 	}
+
+	/**
+	 * Prompts the user to enter a monorepo alias.
+	 *
+	 * @param {string} [message='Monorepo alias (e.g. myorg or @myorg):'] - The prompt message
+	 * @returns {Promise<string | null>} The alias string, or null if cancelled
+	 */
+	public async askAlias(
+		message: string = 'Monorepo alias (e.g. myorg or @myorg):'
+	): Promise<string | null> {
+		try {
+			const response = await Enquirer.prompt<{ alias: string }>({
+				type: 'input',
+				name: 'alias',
+				message,
+				initial: 'myorg'
+			});
+			return response.alias?.trim() ?? null;
+		} catch (error) {
+			if (error && typeof error === 'object' && 'name' in error) {
+				const err = error as { name?: string };
+				if (err.name === 'Error' || err.name === 'CancelledPromptError') {
+					return null;
+				}
+			}
+			throw new Error(
+				`Failed to prompt for alias: ${error instanceof Error ? error.message : String(error)}`
+			);
+		}
+	}
 }

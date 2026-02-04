@@ -1,6 +1,12 @@
 import { InitCommand } from '../../app/InitCommand';
+import { BootstrapBlankMonorepoUseCase } from '../../app/use-cases/BootstrapBlankMonorepoUseCase';
 import { SelectTemplateUseCase } from '../../app/use-cases/SelectTemplateUseCase';
+import { RepoStateUseCasesFactory } from '../../../repo-state/infra/factories/RepoStateUseCasesFactory';
+import { BunRuntimeAdapter } from '../adapters/BunRuntimeAdapter';
 import { EnquirerAdapter } from '../adapters/EnquirerAdapter';
+import { NodeFilesystemAdapter } from '../adapters/NodeFilesystemAdapter';
+import { MonorepoScaffolderAdapter } from '../adapters/MonorepoScaffolderAdapter';
+import { PackageJsonAdapter } from '../adapters/PackageJsonAdapter';
 
 /**
  * Factory for creating InitCommand instances with proper dependency injection.
@@ -12,15 +18,26 @@ import { EnquirerAdapter } from '../adapters/EnquirerAdapter';
  * @class InitCommandFactory
  */
 export class InitCommandFactory {
-	/**
-	 * Creates a new InitCommand instance with all dependencies properly wired.
-	 *
-	 * @static
-	 * @returns {InitCommand} A fully configured InitCommand instance
-	 */
 	public static create(): InitCommand {
 		const userInterface = new EnquirerAdapter();
-		const selectTemplateUseCase = new SelectTemplateUseCase(userInterface);
-		return new InitCommand(selectTemplateUseCase);
+		const selectTemplateUseCase = new SelectTemplateUseCase({ userInterface });
+
+		const filesystem = new NodeFilesystemAdapter();
+		const packageJson = new PackageJsonAdapter();
+		const scaffolder = new MonorepoScaffolderAdapter({ filesystem, packageJson });
+		const bunRuntime = new BunRuntimeAdapter();
+		const initializeRepoState =
+			RepoStateUseCasesFactory.createInitializeRepoStateUseCase();
+		const bootstrapMonorepoUseCase = new BootstrapBlankMonorepoUseCase({
+			bunRuntime,
+			userInterface,
+			scaffolder,
+			initializeRepoState
+		});
+
+		return new InitCommand({
+			selectTemplateUseCase,
+			bootstrapMonorepoUseCase
+		});
 	}
 }

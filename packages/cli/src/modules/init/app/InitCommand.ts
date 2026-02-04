@@ -1,11 +1,17 @@
 import { SelectTemplateUseCase } from './use-cases/SelectTemplateUseCase';
+import type { BootstrapBlankMonorepoUseCase } from './use-cases/BootstrapBlankMonorepoUseCase';
+
+export interface InitCommandProps {
+	selectTemplateUseCase: SelectTemplateUseCase;
+	bootstrapMonorepoUseCase: BootstrapBlankMonorepoUseCase;
+}
 
 /**
  * Command for initializing a new project.
  *
  * This command orchestrates the project initialization workflow by:
  * 1. Prompting the user to select a project template
- * 2. Processing the selected template (future: scaffolding project structure)
+ * 2. Processing the selected template (scaffolding)
  *
  * Following the Dependency Inversion Principle, this command depends on
  * abstractions (use cases) rather than concrete implementations.
@@ -13,34 +19,17 @@ import { SelectTemplateUseCase } from './use-cases/SelectTemplateUseCase';
  * @class InitCommand
  */
 export class InitCommand {
-	/**
-	 * The use case for selecting a template.
-	 *
-	 * @private
-	 * @readonly
-	 */
 	private readonly selectTemplateUseCase: SelectTemplateUseCase;
+	private readonly bootstrapMonorepoUseCase: BootstrapBlankMonorepoUseCase;
 
-	/**
-	 * Creates a new InitCommand instance.
-	 *
-	 * @param {SelectTemplateUseCase} selectTemplateUseCase - The use case for template selection
-	 */
-	constructor(selectTemplateUseCase: SelectTemplateUseCase) {
+	constructor({
+		selectTemplateUseCase,
+		bootstrapMonorepoUseCase
+	}: InitCommandProps) {
 		this.selectTemplateUseCase = selectTemplateUseCase;
+		this.bootstrapMonorepoUseCase = bootstrapMonorepoUseCase;
 	}
 
-	/**
-	 * Executes the init command.
-	 *
-	 * This method orchestrates the project initialization process by:
-	 * 1. Displaying an initialization message
-	 * 2. Prompting the user to select a template
-	 * 3. Processing the selected template (future implementation)
-	 *
-	 * @returns {Promise<void>}
-	 * @throws {Error} If template selection or project initialization fails
-	 */
 	public async execute(): Promise<void> {
 		console.log('\n🚀 Initializing new project...\n');
 
@@ -52,9 +41,13 @@ export class InitCommand {
 		}
 
 		console.log(`\nSelected template: ${selectedTemplate.name}`);
-		console.log('Configuring project...');
 
-		// Next step: Integration with bun init and template scaffolding
-		// This will be implemented in subsequent tasks
+		if (selectedTemplate.type.value === 'monorepo') {
+			await this.bootstrapMonorepoUseCase.execute(process.cwd());
+			return;
+		}
+
+		console.log('Configuring project...');
+		// Other template types: future implementation
 	}
 }
