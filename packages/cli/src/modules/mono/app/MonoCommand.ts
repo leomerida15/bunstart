@@ -20,7 +20,7 @@ export interface MonoCommandProps {
 /**
  * Command for managing monorepo packages and applications.
  *
- * Handles subcommands: add app|pkg <name>, build <alias>, dev <alias>, start, generate.
+ * Handles subcommands: generate|gen app|pkg <name>, build <alias>, dev <alias>, start, sync.
  *
  * @class MonoCommand
  */
@@ -60,8 +60,8 @@ export class MonoCommand {
 		const subcommand = args[0];
 		const extraArgs = args.slice(1);
 
-		if (subcommand === 'add') {
-			await this.handleAdd(extraArgs);
+		if (subcommand === 'generate' || subcommand === 'gen') {
+			await this.handleGenerate(extraArgs);
 			return;
 		}
 
@@ -105,15 +105,19 @@ export class MonoCommand {
 		}
 	}
 
-	private async handleAdd(args: string[]): Promise<void> {
+	private async handleGenerate(args: string[]): Promise<void> {
 		const typeArg = args[0];
 		const name = args[1];
 		if (!typeArg || (typeArg !== 'app' && typeArg !== 'pkg')) {
-			console.error('Usage: buns mono add app <name> | buns mono add pkg <name>');
+			console.error(
+				'Usage: buns mono generate app <name> | buns mono generate pkg <name> (alias: gen)'
+			);
 			process.exit(1);
 		}
 		if (!name?.trim()) {
-			console.error('Missing workspace name. Example: buns mono add app my-app');
+			console.error(
+				'Missing workspace name. Example: buns mono generate app my-app or buns mono gen app my-app'
+			);
 			process.exit(1);
 		}
 
@@ -136,11 +140,11 @@ export class MonoCommand {
 			if (typeArg === 'app') {
 				await this.addApp.execute(cwd, name, packageName, []);
 				await this.scaffolder.scaffoldApp(cwd, name, scope);
-				console.log(`\n✅ App "${name}" added and scaffolded.`);
+				console.log(`\n✅ App "${name}" generated and registered.`);
 			} else {
 				await this.addPackage.execute(cwd, name, packageName, []);
 				await this.scaffolder.scaffoldPackage(cwd, name, scope);
-				console.log(`\n✅ Package "${name}" added and scaffolded.`);
+				console.log(`\n✅ Package "${name}" generated and registered.`);
 			}
 		} catch (err) {
 			console.error(err instanceof Error ? err.message : String(err));
@@ -172,8 +176,12 @@ export class MonoCommand {
 
 	private showUsage(): void {
 		console.log('\nUsage: buns mono <subcommand> [options]');
-		console.log('       buns mono add app <name>   Add a new app');
-		console.log('       buns mono add pkg <name>   Add a new package');
+		console.log(
+			'       buns mono generate app <name>   Generate and register a new app (alias: gen)'
+		);
+		console.log(
+			'       buns mono generate pkg <name>   Generate and register a new package (alias: gen)'
+		);
 		console.log('       buns mono build <alias>     Build workspace and its dependencies');
 		console.log('       buns mono dev <alias>        Run dev script (builds deps first)');
 		console.log('       buns mono sync                Sync dependsOn from package.json for all workspaces');

@@ -19,14 +19,11 @@ Commands:
                           Templates: monorepo, api-rest, frontend-react, library
 
   mono <subcommand>       Manage monorepo packages and apps
-    add app <name>        Add a new app to the monorepo
-    add pkg <name>        Add a new package to the monorepo
+    generate app <name>   Generate and register a new app (alias: gen)
+    generate pkg <name>   Generate and register a new package (alias: gen)
     start                 Run start script for selected package/app
     dev                   Run dev script for selected package/app
     build                 Run build script for selected package/app
-    generate <type>       Generate a new app or package
-      app <name>          Create a new app in the monorepo
-      pkg <name>          Create a new package in the monorepo
 
 Options:
   -h, --help              Show this help message
@@ -35,8 +32,8 @@ Options:
 Examples:
   buns init
   buns app-example build
-  buns mono add app my-app
-  buns mono add pkg shared-utils
+  buns mono generate app my-app
+  buns mono gen pkg shared-utils
   buns mono start
 `);
 }
