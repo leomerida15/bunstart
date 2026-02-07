@@ -1,19 +1,32 @@
 import type { MonorepoScaffolderPort } from '../../init/domain/ports/MonorepoScaffolder.port';
-import { getScope, isWorkspaceAlias } from '../../repo-state/domain/entities/RepoState';
-import type { AddAppUseCase } from '../../repo-state/app/use-cases/AddAppUseCase';
-import type { AddPackageUseCase } from '../../repo-state/app/use-cases/AddPackageUseCase';
-import type { EnsureDepsBuiltUseCase } from '../../repo-state/app/use-cases/EnsureDepsBuiltUseCase';
-import type { LoadRepoStateUseCase } from '../../repo-state/app/use-cases/LoadRepoStateUseCase';
-import type { RunInWorkspaceUseCase } from '../../repo-state/app/use-cases/RunInWorkspaceUseCase';
-import type { SyncDependsOnFromPackageJsonUseCase } from '../../repo-state/app/use-cases/SyncDependsOnFromPackageJsonUseCase';
+import { isNativeBunCommand } from '../domain/services/NativeBunCommands';
+import { getScope, isWorkspaceAlias } from '../domain/services/WorkspaceResolver';
+import type { LoadConfigUseCase } from '../../config-state/app/use-cases/LoadConfigUseCase';
+import type { AddAppUseCase } from './use-cases/AddAppUseCase';
+import type { AddPackageUseCase } from './use-cases/AddPackageUseCase';
+import type { RemoveAppUseCase } from './use-cases/RemoveAppUseCase';
+import type { RemovePackageUseCase } from './use-cases/RemovePackageUseCase';
+import type { EnsureDepsBuiltUseCase } from './use-cases/EnsureDepsBuiltUseCase';
+import type { RunInWorkspaceUseCase } from './use-cases/RunInWorkspaceUseCase';
+import type { SyncDependsOnFromPackageJsonUseCase } from './use-cases/SyncDependsOnFromPackageJsonUseCase';
+import type { EnsureConfigSyncedUseCase } from './use-cases/EnsureConfigSyncedUseCase';
+import type { AddWorkspaceDepUseCase } from './use-cases/AddWorkspaceDepUseCase';
+import type { RemoveWorkspaceDepUseCase } from './use-cases/RemoveWorkspaceDepUseCase';
+import type { RunBunInstallPort } from '../domain/ports/RunBunInstall.port';
 
 export interface MonoCommandProps {
-	loadRepoState: LoadRepoStateUseCase;
+	loadConfig: LoadConfigUseCase;
 	addApp: AddAppUseCase;
 	addPackage: AddPackageUseCase;
+	removeApp: RemoveAppUseCase;
+	removePackage: RemovePackageUseCase;
+	ensureConfigSynced: EnsureConfigSyncedUseCase;
 	ensureDepsBuilt: EnsureDepsBuiltUseCase;
 	runInWorkspace: RunInWorkspaceUseCase;
 	syncDependsOn: SyncDependsOnFromPackageJsonUseCase;
+	addWorkspaceDep: AddWorkspaceDepUseCase;
+	removeWorkspaceDep: RemoveWorkspaceDepUseCase;
+	runBunInstall: RunBunInstallPort;
 	scaffolder: MonorepoScaffolderPort;
 }
 
@@ -25,29 +38,47 @@ export interface MonoCommandProps {
  * @class MonoCommand
  */
 export class MonoCommand {
-	private readonly loadRepoState: LoadRepoStateUseCase;
+	private readonly loadConfig: LoadConfigUseCase;
 	private readonly addApp: AddAppUseCase;
 	private readonly addPackage: AddPackageUseCase;
+	private readonly removeApp: RemoveAppUseCase;
+	private readonly removePackage: RemovePackageUseCase;
+	private readonly ensureConfigSynced: EnsureConfigSyncedUseCase;
 	private readonly ensureDepsBuilt: EnsureDepsBuiltUseCase;
 	private readonly runInWorkspace: RunInWorkspaceUseCase;
 	private readonly syncDependsOn: SyncDependsOnFromPackageJsonUseCase;
+	private readonly addWorkspaceDep: AddWorkspaceDepUseCase;
+	private readonly removeWorkspaceDep: RemoveWorkspaceDepUseCase;
+	private readonly runBunInstall: RunBunInstallPort;
 	private readonly scaffolder: MonorepoScaffolderPort;
 
 	constructor({
-		loadRepoState,
+		loadConfig,
 		addApp,
 		addPackage,
+		removeApp,
+		removePackage,
+		ensureConfigSynced,
 		ensureDepsBuilt,
 		runInWorkspace,
 		syncDependsOn,
+		addWorkspaceDep,
+		removeWorkspaceDep,
+		runBunInstall,
 		scaffolder
 	}: MonoCommandProps) {
-		this.loadRepoState = loadRepoState;
+		this.loadConfig = loadConfig;
 		this.addApp = addApp;
 		this.addPackage = addPackage;
+		this.removeApp = removeApp;
+		this.removePackage = removePackage;
+		this.ensureConfigSynced = ensureConfigSynced;
 		this.ensureDepsBuilt = ensureDepsBuilt;
 		this.runInWorkspace = runInWorkspace;
 		this.syncDependsOn = syncDependsOn;
+		this.addWorkspaceDep = addWorkspaceDep;
+		this.removeWorkspaceDep = removeWorkspaceDep;
+		this.runBunInstall = runBunInstall;
 		this.scaffolder = scaffolder;
 	}
 
@@ -65,7 +96,7 @@ export class MonoCommand {
 			return;
 		}
 
-		if (subcommand === 'build' || subcommand === 'dev') {
+		if (subcommand === 'build' || subcommand === 'dev' || subcommand === 'start') {
 			await this.handleBuildOrDev(subcommand, extraArgs);
 			return;
 		}
@@ -75,30 +106,99 @@ export class MonoCommand {
 			return;
 		}
 
-		console.log(`\n📦 Mono Command: ${subcommand} ${extraArgs.join(' ')}`);
-		console.log('Orchestrating monorepo tasks...');
+		if (subcommand === 'add-dep') {
+			await this.handleAddDep(extraArgs);
+			return;
+		}
+
+		if (
+			subcommand === 'remove-dep' ||
+			subcommand === 'rm-dep' ||
+			subcommand === 'r-dep'
+		) {
+			await this.handleRemoveDep(extraArgs);
+			return;
+		}
+
+		if (subcommand === 'remove') {
+			await this.handleRemove(extraArgs);
+			return;
+		}
+
+		// Fallthrough: mono <alias> <cmd> [args...]
+		const alias = subcommand;
+		if (!alias || extraArgs.length === 0) {
+			console.error('Usage: buns mono <alias> <script|cmd> [args...]');
+			process.exit(1);
+		}
+		const cwd = process.cwd();
+		const config = await this.loadConfig.execute(cwd);
+		if (!config) {
+			console.error('No bunstart.config.ts found. Run this from the monorepo root.');
+			process.exit(1);
+		}
+		const repo = config.repo ?? { apps: {}, packages: {} };
+		if (!isWorkspaceAlias(repo, alias)) {
+			console.error(`Unknown subcommand or workspace: ${alias}`);
+			process.exit(1);
+		}
+		await this.handleRunInWorkspace(alias, extraArgs);
+	}
+
+	private async handleRunScript(
+		script: 'build' | 'dev' | 'start',
+		alias: string
+	): Promise<void> {
+		const cwd = process.cwd();
+		const config = await this.loadConfig.execute(cwd);
+		const repo = config?.repo ?? { apps: {}, packages: {} };
+		if (!isWorkspaceAlias(repo, alias)) {
+			console.error(`Unknown workspace: ${alias}`);
+			process.exit(1);
+		}
+		try {
+			await this.ensureConfigSynced.execute(cwd);
+			await this.ensureDepsBuilt.execute(cwd, alias);
+			await this.runInWorkspace.execute(cwd, alias, ['run', script]);
+		} catch (err) {
+			console.error(err instanceof Error ? err.message : String(err));
+			process.exit(1);
+		}
 	}
 
 	private async handleBuildOrDev(
-		script: 'build' | 'dev',
+		script: 'build' | 'dev' | 'start',
 		args: string[]
 	): Promise<void> {
-		const workspaceId = args[0];
-		if (!workspaceId?.trim()) {
+		const alias = args[0];
+		if (!alias?.trim()) {
 			console.error(`Usage: buns mono ${script} <appAlias|pkgAlias>`);
 			process.exit(1);
 		}
+		await this.handleRunScript(script, alias);
+	}
 
-		const cwd = process.cwd();
-		const state = await this.loadRepoState.execute(cwd);
-		if (!state || !isWorkspaceAlias(state, workspaceId)) {
-			console.error(`Unknown workspace: ${workspaceId}`);
+	private async handleRunInWorkspace(
+		workspaceId: string,
+		args: string[]
+	): Promise<void> {
+		const cmd = args[0];
+		if (!cmd) {
+			console.error('Usage: buns mono <alias> <script|cmd> [args...]');
 			process.exit(1);
 		}
+		if (cmd === 'build' || cmd === 'dev' || cmd === 'start') {
+			await this.handleRunScript(cmd, workspaceId);
+			return;
+		}
+		const rest = args.slice(1);
+		const bunArgs = isNativeBunCommand(cmd)
+			? [cmd, ...rest]
+			: ['run', cmd, ...rest];
 
+		const cwd = process.cwd();
 		try {
-			await this.ensureDepsBuilt.execute(cwd, workspaceId);
-			await this.runInWorkspace.execute(cwd, workspaceId, ['run', script]);
+			await this.runInWorkspace.execute(cwd, workspaceId, bunArgs);
 		} catch (err) {
 			console.error(err instanceof Error ? err.message : String(err));
 			process.exit(1);
@@ -122,13 +222,13 @@ export class MonoCommand {
 		}
 
 		const cwd = process.cwd();
-		const state = await this.loadRepoState.execute(cwd);
-		if (!state) {
+		const config = await this.loadConfig.execute(cwd);
+		if (!config) {
 			console.error('No bunstart.config.ts found. Run this from the monorepo root.');
 			process.exit(1);
 		}
-
-		const scope = getScope(state);
+		const repo = config.repo ?? { apps: {}, packages: {} };
+		const scope = getScope(repo);
 		if (!scope) {
 			console.error('Could not determine monorepo scope from config.');
 			process.exit(1);
@@ -140,10 +240,12 @@ export class MonoCommand {
 			if (typeArg === 'app') {
 				await this.addApp.execute(cwd, name, packageName, []);
 				await this.scaffolder.scaffoldApp(cwd, name, scope);
+				await this.runBunInstall.execute(cwd);
 				console.log(`\n✅ App "${name}" generated and registered.`);
 			} else {
 				await this.addPackage.execute(cwd, name, packageName, []);
 				await this.scaffolder.scaffoldPackage(cwd, name, scope);
+				await this.runBunInstall.execute(cwd);
 				console.log(`\n✅ Package "${name}" generated and registered.`);
 			}
 		} catch (err) {
@@ -152,17 +254,129 @@ export class MonoCommand {
 		}
 	}
 
-	private async handleSync(): Promise<void> {
-		const cwd = process.cwd();
-		const state = await this.loadRepoState.execute(cwd);
-		if (!state) {
-			console.error('No bunstart.config.ts found. Run this from the monorepo root.');
+	private async handleRemove(args: string[]): Promise<void> {
+		const typeArg = args[0];
+		const name = args[1];
+		if (typeArg !== 'app' && typeArg !== 'pkg') {
+			console.error(
+				'Usage: buns mono remove app <name> | buns mono remove pkg <name>'
+			);
+			process.exit(1);
+		}
+		if (!name?.trim()) {
+			console.error('Missing workspace name.');
 			process.exit(1);
 		}
 
+		const cwd = process.cwd();
+		const config = await this.loadConfig.execute(cwd);
+		if (!config) {
+			console.error('No bunstart.config.ts found. Run this from the monorepo root.');
+			process.exit(1);
+		}
+		const repo = config.repo ?? { apps: {}, packages: {} };
+		if (typeArg === 'app') {
+			if (!repo.apps[name]) {
+				console.error(`App "${name}" does not exist.`);
+				process.exit(1);
+			}
+		} else {
+			if (!repo.packages[name]) {
+				console.error(`Package "${name}" does not exist.`);
+				process.exit(1);
+			}
+		}
+
+		try {
+			if (typeArg === 'app') {
+				await this.removeApp.execute(cwd, name);
+				console.log(`\n✅ App "${name}" removed from config.`);
+			} else {
+				await this.removePackage.execute(cwd, name);
+				console.log(`\n✅ Package "${name}" removed from config.`);
+			}
+		} catch (err) {
+			console.error(err instanceof Error ? err.message : String(err));
+			process.exit(1);
+		}
+	}
+
+	private parseAddDepFlags(args: string[]): {
+		target: string;
+		source: string;
+		dev: boolean;
+		peer: boolean;
+		optional: boolean;
+		exact: boolean;
+	} {
+		if (args.length < 2) {
+			console.error('Usage: buns mono add-dep <target> <source> [--dev|--peer|--optional|--exact]');
+			process.exit(1);
+		}
+		const target = args[0]!;
+		const source = args[1]!;
+		const rest = args.slice(2);
+		let dev = false;
+		let peer = false;
+		let optional = false;
+		let exact = false;
+		for (const a of rest) {
+			if (a === '--dev' || a === '-d') dev = true;
+			else if (a === '--peer') peer = true;
+			else if (a === '--optional') optional = true;
+			else if (a === '--exact' || a === '-E') exact = true;
+		}
+		return { target, source, dev, peer, optional, exact };
+	}
+
+	private async handleAddDep(args: string[]): Promise<void> {
+		const { target, source, dev, peer, optional, exact } = this.parseAddDepFlags(args);
+		const cwd = process.cwd();
+		try {
+			await this.addWorkspaceDep.execute(cwd, target, source, {
+				dev,
+				peer,
+				optional,
+				exact
+			});
+			const tipo = peer ? 'peer' : optional ? 'optional' : dev ? 'dev' : 'dependencies';
+			console.log(`\n✅ Added ${source} to ${target} (${tipo}). Config synced.`);
+		} catch (err) {
+			console.error(err instanceof Error ? err.message : String(err));
+			process.exit(1);
+		}
+	}
+
+	private async handleRemoveDep(args: string[]): Promise<void> {
+		if (args.length < 2) {
+			console.error(
+				'Usage: buns mono remove-dep | rm-dep | r-dep <target> <source>'
+			);
+			process.exit(1);
+		}
+		const target = args[0]!;
+		const source = args[1]!;
+		const cwd = process.cwd();
+		try {
+			await this.removeWorkspaceDep.execute(cwd, target, source);
+			console.log(`\n✅ Removed ${source} from ${target}. Config synced.`);
+		} catch (err) {
+			console.error(err instanceof Error ? err.message : String(err));
+			process.exit(1);
+		}
+	}
+
+	private async handleSync(): Promise<void> {
+		const cwd = process.cwd();
+		const config = await this.loadConfig.execute(cwd);
+		if (!config) {
+			console.error('No bunstart.config.ts found. Run this from the monorepo root.');
+			process.exit(1);
+		}
+		const repo = config.repo ?? { apps: {}, packages: {} };
 		const ids = [
-			...Object.keys(state.apps),
-			...Object.keys(state.packages)
+			...Object.keys(repo.apps),
+			...Object.keys(repo.packages)
 		];
 		for (const id of ids) {
 			try {
@@ -182,9 +396,19 @@ export class MonoCommand {
 		console.log(
 			'       buns mono generate pkg <name>   Generate and register a new package (alias: gen)'
 		);
-		console.log('       buns mono build <alias>     Build workspace and its dependencies');
-		console.log('       buns mono dev <alias>        Run dev script (builds deps first)');
-		console.log('       buns mono sync                Sync dependsOn from package.json for all workspaces');
-		console.log('       buns mono <appName|pkgName> [script]');
+		console.log('       buns mono build <alias>     Build workspace (alias: mono <alias> build)');
+		console.log('       buns mono dev <alias>       Run dev script (alias: mono <alias> dev)');
+		console.log('       buns mono start <alias>     Run start script (alias: mono <alias> start)');
+		console.log('       buns mono sync              Sync dependsOn from package.json for all workspaces');
+		console.log(
+			'       buns mono add-dep <target> <source> [--dev|--peer|--optional|--exact] Add workspace as dependency and sync config'
+		);
+		console.log(
+			'       buns mono remove-dep | rm-dep | r-dep <target> <source> Remove workspace dependency and sync config'
+		);
+		console.log('       buns mono remove app <name> Remove app from config');
+		console.log('       buns mono remove pkg <name> Remove package from config');
+		console.log('       buns mono <alias> <script>  Run script in workspace (e.g. buns mono app-example test)');
+		console.log('       buns mono <alias> add <pkg> Run bun command in workspace (e.g. buns mono app-example add lodash)');
 	}
 }

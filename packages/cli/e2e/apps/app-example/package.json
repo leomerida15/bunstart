@@ -1,0 +1,24 @@
+{
+  "name": "@test/app-example",
+  "version": "0.1.0",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "start": "bun run -b dist/index.js",
+    "build": "bun run -b bunstart.build.ts",
+    "watch": "bun run -b bunstart.watch.ts",
+    "dev": "bun run watch"
+  },
+  "dependencies": {
+    "@test/pkg-example": "workspace:*",
+    "lodash": "^4.17.23",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/cors": "^2.8.19"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

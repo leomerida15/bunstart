@@ -3,7 +3,8 @@
   "type": "module",
   "module": "src/index.ts",
   "bin": {
-    "bunstart": "./dist/index.js"
+    "bunstart": "./dist/index.js",
+    "buns": "./dist/index.js"
   },
   "exports": {
     ".": "./dist/index.js"

@@ -1,7 +1,8 @@
 import { InitCommandFactory } from './modules/init/infra/factories/InitCommandFactory';
 import { MonoCommandFactory } from './modules/mono/infra/factories/MonoCommandFactory';
-import { RepoStateUseCasesFactory } from './modules/repo-state/infra/factories/RepoStateUseCasesFactory';
-import { isWorkspaceAlias } from './modules/repo-state/domain/entities/RepoState';
+import { ConfigUseCasesFactory } from './modules/config-state/infra/factories/ConfigUseCasesFactory';
+import { isNativeBunCommand } from './modules/mono/domain/services/NativeBunCommands';
+import { isWorkspaceAliasFromConfig } from './modules/mono/domain/services/WorkspaceResolver';
 
 /**
  * Displays the help message for the CLI.
@@ -110,27 +111,43 @@ async function main(): Promise<void> {
 					process.exit(1);
 				}
 				// Try run: buns <alias> [...commands] when in a monorepo with bunstart.config
-				const loadRepoState = RepoStateUseCasesFactory.createLoadRepoStateUseCase();
-				const state = await loadRepoState.execute(process.cwd());
-				if (state && isWorkspaceAlias(state, command)) {
+				const loadConfig = ConfigUseCasesFactory.createLoadConfigUseCase();
+				const config = await loadConfig.execute(process.cwd());
+				if (isWorkspaceAliasFromConfig(config, command)) {
 					const cwd = process.cwd();
-					// Ensure dependencies are built before build/dev
+					// Ensure dependencies are built before build/dev/start
 					const isBuildOrDev =
 						commandArgs[0] === 'build' ||
 						commandArgs[0] === 'dev' ||
+						commandArgs[0] === 'start' ||
 						(commandArgs[0] === 'run' &&
-							(commandArgs[1] === 'build' || commandArgs[1] === 'dev'));
+							(commandArgs[1] === 'build' ||
+								commandArgs[1] === 'dev' ||
+								commandArgs[1] === 'start'));
 					if (isBuildOrDev) {
+						const ensureConfigSynced =
+							MonoCommandFactory.createEnsureConfigSyncedUseCase();
+						await ensureConfigSynced.execute(cwd);
 						const ensureDepsBuilt =
-							RepoStateUseCasesFactory.createEnsureDepsBuiltUseCase();
+							MonoCommandFactory.createEnsureDepsBuiltUseCase();
 						await ensureDepsBuilt.execute(cwd, command);
 					}
-					const runInWorkspace = RepoStateUseCasesFactory.createRunInWorkspaceUseCase();
-					// Pass through; if user said "buns app-example build", we need "run build"
-					const runArgs =
-						commandArgs.length > 0 && commandArgs[0] !== 'run'
-							? ['run', ...commandArgs]
-							: commandArgs;
+					const runInWorkspace = MonoCommandFactory.createRunInWorkspaceUseCase();
+					// Native bun commands: no "run" prefix. Scripts: prepend "run"
+					let runArgs: string[];
+					if (
+						commandArgs.length > 0 &&
+						isNativeBunCommand(commandArgs[0])
+					) {
+						runArgs = commandArgs;
+					} else if (
+						commandArgs.length > 0 &&
+						commandArgs[0] !== 'run'
+					) {
+						runArgs = ['run', ...commandArgs];
+					} else {
+						runArgs = commandArgs;
+					}
 					await runInWorkspace.execute(cwd, command, runArgs);
 				} else {
 					console.error(`Error: Unknown command "${command}".`);

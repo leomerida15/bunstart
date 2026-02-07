@@ -1,7 +1,7 @@
 import { InitCommand } from '../../app/InitCommand';
 import { BootstrapBlankMonorepoUseCase } from '../../app/use-cases/BootstrapBlankMonorepoUseCase';
 import { SelectTemplateUseCase } from '../../app/use-cases/SelectTemplateUseCase';
-import { RepoStateUseCasesFactory } from '../../../repo-state/infra/factories/RepoStateUseCasesFactory';
+import { ConfigUseCasesFactory } from '../../../config-state/infra/factories/ConfigUseCasesFactory';
 import { BunRuntimeAdapter } from '../adapters/BunRuntimeAdapter';
 import { EnquirerAdapter } from '../adapters/EnquirerAdapter';
 import { NodeFilesystemAdapter } from '../adapters/NodeFilesystemAdapter';
@@ -26,13 +26,13 @@ export class InitCommandFactory {
 		const packageJson = new PackageJsonAdapter();
 		const scaffolder = new MonorepoScaffolderAdapter({ filesystem, packageJson });
 		const bunRuntime = new BunRuntimeAdapter();
-		const initializeRepoState =
-			RepoStateUseCasesFactory.createInitializeRepoStateUseCase();
+		const initializeConfig =
+			ConfigUseCasesFactory.createInitializeConfigUseCase();
 		const bootstrapMonorepoUseCase = new BootstrapBlankMonorepoUseCase({
 			bunRuntime,
 			userInterface,
 			scaffolder,
-			initializeRepoState
+			initializeConfig
 		});
 
 		return new InitCommand({

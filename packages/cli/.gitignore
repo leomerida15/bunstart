@@ -27,6 +27,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .cache
 *.tsbuildinfo
 
+# mono: sync state (first-run / package.json change detection before build)
+.bunstart/
+
 # IntelliJ based IDEs
 .idea
 
