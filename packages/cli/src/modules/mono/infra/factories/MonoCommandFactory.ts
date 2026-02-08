@@ -18,6 +18,10 @@ import { SyncStateFileAdapter } from '../adapters/SyncStateFileAdapter';
 import { PackageJsonAdapter } from '../../../init/infra/adapters/PackageJsonAdapter';
 import { PackageJsonWorkspacesAdapter } from '../adapters/PackageJsonWorkspacesAdapter';
 import { NodeFilesystemAdapter } from '../../../init/infra/adapters/NodeFilesystemAdapter';
+import { InitCommandFactory } from '../../../init/infra/factories/InitCommandFactory';
+import { CreateMonoRepoUseCase } from '../../app/use-cases/CreateMonoRepoUseCase';
+import { MigrateMonoRepoUseCase } from '../../app/use-cases/MigrateMonoRepoUseCase';
+import { EnquirerAdapter } from '../../../init/infra/adapters/EnquirerAdapter';
 import { MonorepoScaffolderAdapter } from '../../../init/infra/adapters/MonorepoScaffolderAdapter';
 
 /**
@@ -80,6 +84,26 @@ export class MonoCommandFactory {
 			addPackage,
 			runBunInstall
 		});
+
+		const initCommand = InitCommandFactory.create();
+		const userInterface = new EnquirerAdapter();
+
+		const createMonoRepo = new CreateMonoRepoUseCase({
+			initCommand,
+			filesystem,
+			userInterface
+		});
+
+		const initializeConfig = ConfigUseCasesFactory.createInitializeConfigUseCase();
+
+		const migrateMonoRepo = new MigrateMonoRepoUseCase({
+			resolveWorkspaces: this.resolveWorkspacesAdapter,
+			adoptProject,
+			userInterface,
+			packageJson: packageJsonAdapter,
+			initializeConfig
+		});
+
 		return new MonoCommand({
 			loadConfig: this.loadConfig,
 			resolveWorkspaces: this.resolveWorkspacesAdapter,
@@ -101,7 +125,9 @@ export class MonoCommandFactory {
 			removeWorkspaceDep: this.removeWorkspaceDep,
 			runBunInstall,
 			adoptProject,
-			scaffolder
+			scaffolder,
+			createMonoRepo,
+			migrateMonoRepo
 		});
 	}
 

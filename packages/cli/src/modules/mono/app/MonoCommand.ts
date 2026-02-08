@@ -15,6 +15,8 @@ import type { AddWorkspaceDepUseCase } from './use-cases/AddWorkspaceDepUseCase'
 import type { RemoveWorkspaceDepUseCase } from './use-cases/RemoveWorkspaceDepUseCase';
 import type { RunBunInstallPort } from '../domain/ports/RunBunInstall.port';
 import type { AdoptProjectUseCase } from './use-cases/AdoptProjectUseCase';
+import type { CreateMonoRepoUseCase } from './use-cases/CreateMonoRepoUseCase';
+import type { MigrateMonoRepoUseCase } from './use-cases/MigrateMonoRepoUseCase';
 
 export interface MonoCommandProps {
 	loadConfig: LoadConfigUseCase;
@@ -32,6 +34,8 @@ export interface MonoCommandProps {
 	runBunInstall: RunBunInstallPort;
 	adoptProject: AdoptProjectUseCase;
 	scaffolder: MonorepoScaffolderPort;
+	createMonoRepo: CreateMonoRepoUseCase;
+	migrateMonoRepo: MigrateMonoRepoUseCase;
 }
 
 /**
@@ -57,6 +61,8 @@ export class MonoCommand {
 	private readonly runBunInstall: RunBunInstallPort;
 	private readonly adoptProject: AdoptProjectUseCase;
 	private readonly scaffolder: MonorepoScaffolderPort;
+	private readonly createMonoRepo: CreateMonoRepoUseCase;
+	private readonly migrateMonoRepo: MigrateMonoRepoUseCase;
 
 	constructor({
 		loadConfig,
@@ -73,7 +79,9 @@ export class MonoCommand {
 		removeWorkspaceDep,
 		runBunInstall,
 		adoptProject,
-		scaffolder
+		scaffolder,
+		createMonoRepo,
+		migrateMonoRepo
 	}: MonoCommandProps) {
 		this.loadConfig = loadConfig;
 		this.resolveWorkspaces = resolveWorkspaces;
@@ -90,6 +98,8 @@ export class MonoCommand {
 		this.runBunInstall = runBunInstall;
 		this.adoptProject = adoptProject;
 		this.scaffolder = scaffolder;
+		this.createMonoRepo = createMonoRepo;
+		this.migrateMonoRepo = migrateMonoRepo;
 	}
 
 	async execute(args: string[]): Promise<void> {
@@ -100,6 +110,16 @@ export class MonoCommand {
 
 		const subcommand = args[0];
 		const extraArgs = args.slice(1);
+
+		if (subcommand === 'create') {
+			await this.createMonoRepo.execute(extraArgs[0]);
+			return;
+		}
+
+		if (subcommand === 'migrate') {
+			await this.migrateMonoRepo.execute(process.cwd());
+			return;
+		}
 
 		if (subcommand === 'generate' || subcommand === 'gen') {
 			await this.handleGenerate(extraArgs);
@@ -450,6 +470,8 @@ export class MonoCommand {
 
 	private async showUsage(): Promise<void> {
 		console.log('\nUsage: buns mono <subcommand> [options]');
+		console.log('       buns mono create [name]     Create a new project directory and run init inside it');
+		console.log('       buns mono migrate           Migrate an existing monorepo to bunstart structure');
 		console.log(
 			'       buns mono generate app <name>   Generate and register a new app (alias: gen)'
 		);

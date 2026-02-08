@@ -51,7 +51,7 @@ export class InitCommand {
 		this.bootstrapLibraryUseCase = bootstrapLibraryUseCase;
 	}
 
-	public async execute(): Promise<void> {
+	public async execute(targetDir?: string): Promise<void> {
 		console.log('\n🚀 Initializing new project...\n');
 
 		const selectedTemplate = await this.selectTemplateUseCase.execute();
@@ -63,7 +63,7 @@ export class InitCommand {
 
 		console.log(`\nSelected template: ${selectedTemplate.name}`);
 
-		const cwd = process.cwd();
+		const cwd = targetDir ? targetDir : process.cwd();
 		const projectName = await this.userInterface.promptProjectName(
 			'Project name:',
 			basename(cwd)
