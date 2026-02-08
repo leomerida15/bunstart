@@ -10,6 +10,7 @@ import { SyncDependsOnFromPackageJsonUseCase } from '../../app/use-cases/SyncDep
 import { AddWorkspaceDepUseCase } from '../../app/use-cases/AddWorkspaceDepUseCase';
 import { RemoveWorkspaceDepUseCase } from '../../app/use-cases/RemoveWorkspaceDepUseCase';
 import { EnsureConfigSyncedUseCase } from '../../app/use-cases/EnsureConfigSyncedUseCase';
+import { AdoptProjectUseCase } from '../../app/use-cases/AdoptProjectUseCase';
 import { BunRunInWorkspaceAdapter } from '../adapters/BunRunInWorkspaceAdapter';
 import { BunBuildWorkspaceAdapter } from '../adapters/BunBuildWorkspaceAdapter';
 import { BunRunBunInstallAdapter } from '../adapters/BunRunBunInstallAdapter';
@@ -62,17 +63,28 @@ export class MonoCommandFactory {
 			filesystem,
 			packageJson: packageJsonAdapter
 		});
+		const addApp = new AddAppUseCase({
+			loadConfig: this.loadConfig,
+			patchConfig: this.patchConfig
+		});
+		const addPackage = new AddPackageUseCase({
+			loadConfig: this.loadConfig,
+			patchConfig: this.patchConfig
+		});
+		const runBunInstall = new BunRunBunInstallAdapter();
+		const adoptProject = new AdoptProjectUseCase({
+			loadConfig: this.loadConfig,
+			packageJson: this.packageJson,
+			filesystem,
+			addApp,
+			addPackage,
+			runBunInstall
+		});
 		return new MonoCommand({
 			loadConfig: this.loadConfig,
 			resolveWorkspaces: this.resolveWorkspacesAdapter,
-			addApp: new AddAppUseCase({
-				loadConfig: this.loadConfig,
-				patchConfig: this.patchConfig
-			}),
-			addPackage: new AddPackageUseCase({
-				loadConfig: this.loadConfig,
-				patchConfig: this.patchConfig
-			}),
+			addApp,
+			addPackage,
 			removeApp: new RemoveAppUseCase({
 				loadConfig: this.loadConfig,
 				patchConfig: this.patchConfig
@@ -87,7 +99,8 @@ export class MonoCommandFactory {
 			syncDependsOn: this.syncDependsOn,
 			addWorkspaceDep: this.addWorkspaceDep,
 			removeWorkspaceDep: this.removeWorkspaceDep,
-			runBunInstall: new BunRunBunInstallAdapter(),
+			runBunInstall,
+			adoptProject,
 			scaffolder
 		});
 	}

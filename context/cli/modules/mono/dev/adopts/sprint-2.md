@@ -2,7 +2,7 @@
 
 **Goal:** Permitir adoptar un proyecto que está **fuera** de `apps/` o `packages/` (por ejemplo una carpeta en otro directorio). El flujo: copiar o mover esa carpeta a `apps/<name>` o `packages/<name>`, luego ejecutar el mismo flujo que Sprint 1 (patch name, registrar en config, bun install).
 
-**Status:** Not started
+**Status:** Done
 
 ## Scope
 
@@ -15,11 +15,11 @@
 
 | # | Task | Status | Files |
 |---|------|--------|-------|
-| 1 | Define CLI contract — `adopt app <name> [--from <path>]` o `adopt app <name> [<path>]`; si no se pasa path, comportamiento actual (proyecto ya en apps/name o packages/name) | pending | design |
-| 2 | Port/helper to move or copy directory — FilesystemPort (init) tiene ensureDir, writeFile, deleteFile; puede faltar "copy directory" o "move directory"; extender o usar Node fs cpSync / rename | pending | design |
-| 3 | AdoptProjectUseCase: accept optional source path — si se pasa path, validar origen, copiar/mover a apps/name o packages/name, luego flujo actual; si no se pasa path, flujo actual (Sprint 1) | pending | modify |
-| 4 | MonoCommand.handleAdopt — parsear --from o posición; pasar source path al use case | pending | modify |
-| 5 | Build and verify — adopt desde carpeta externa; comprobar que el proyecto queda en apps/ o packages/ con name actualizado y config actualizado | pending | verify |
+| 1 | Define CLI contract — `adopt app <name> [--from <path>]` o `adopt app <name> [<path>]`; si no se pasa path, comportamiento actual (proyecto ya en apps/name o packages/name) | done | design |
+| 2 | Port/helper to move or copy directory — FilesystemPort (init) tiene ensureDir, writeFile, deleteFile; puede faltar "copy directory" o "move directory"; extender o usar Node fs cpSync / rename | done | design |
+| 3 | AdoptProjectUseCase: accept optional source path — si se pasa path, validar origen, copiar/mover a apps/name o packages/name, luego flujo actual; si no se pasa path, flujo actual (Sprint 1) | done | modify |
+| 4 | MonoCommand.handleAdopt — parsear --from o posición; pasar source path al use case | done | modify |
+| 5 | Build and verify — adopt desde carpeta externa; comprobar que el proyecto queda en apps/ o packages/ con name actualizado y config actualizado | done | verify |
 
 ## Acceptance criteria
 

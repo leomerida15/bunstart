@@ -14,6 +14,7 @@ import type { EnsureConfigSyncedUseCase } from './use-cases/EnsureConfigSyncedUs
 import type { AddWorkspaceDepUseCase } from './use-cases/AddWorkspaceDepUseCase';
 import type { RemoveWorkspaceDepUseCase } from './use-cases/RemoveWorkspaceDepUseCase';
 import type { RunBunInstallPort } from '../domain/ports/RunBunInstall.port';
+import type { AdoptProjectUseCase } from './use-cases/AdoptProjectUseCase';
 
 export interface MonoCommandProps {
 	loadConfig: LoadConfigUseCase;
@@ -29,6 +30,7 @@ export interface MonoCommandProps {
 	addWorkspaceDep: AddWorkspaceDepUseCase;
 	removeWorkspaceDep: RemoveWorkspaceDepUseCase;
 	runBunInstall: RunBunInstallPort;
+	adoptProject: AdoptProjectUseCase;
 	scaffolder: MonorepoScaffolderPort;
 }
 
@@ -53,6 +55,7 @@ export class MonoCommand {
 	private readonly addWorkspaceDep: AddWorkspaceDepUseCase;
 	private readonly removeWorkspaceDep: RemoveWorkspaceDepUseCase;
 	private readonly runBunInstall: RunBunInstallPort;
+	private readonly adoptProject: AdoptProjectUseCase;
 	private readonly scaffolder: MonorepoScaffolderPort;
 
 	constructor({
@@ -69,6 +72,7 @@ export class MonoCommand {
 		addWorkspaceDep,
 		removeWorkspaceDep,
 		runBunInstall,
+		adoptProject,
 		scaffolder
 	}: MonoCommandProps) {
 		this.loadConfig = loadConfig;
@@ -84,6 +88,7 @@ export class MonoCommand {
 		this.addWorkspaceDep = addWorkspaceDep;
 		this.removeWorkspaceDep = removeWorkspaceDep;
 		this.runBunInstall = runBunInstall;
+		this.adoptProject = adoptProject;
 		this.scaffolder = scaffolder;
 	}
 
@@ -113,6 +118,11 @@ export class MonoCommand {
 
 		if (subcommand === 'remove') {
 			await this.handleRemove(extraArgs);
+			return;
+		}
+
+		if (subcommand === 'adopt') {
+			await this.handleAdopt(extraArgs);
 			return;
 		}
 
@@ -306,6 +316,52 @@ export class MonoCommand {
 		}
 	}
 
+	private async handleAdopt(args: string[]): Promise<void> {
+		if (args.length < 2) {
+			this.printAdoptUsage();
+			process.exit(1);
+		}
+		const typeArg = args[0];
+		const name = args[1]!;
+		if (typeArg !== 'app' && typeArg !== 'pkg') {
+			this.printAdoptUsage();
+			process.exit(1);
+		}
+		let sourcePath: string | undefined;
+		const rest = args.slice(2);
+		const fromIdx = rest.indexOf('--from');
+		if (fromIdx !== -1) {
+			if (fromIdx + 1 >= rest.length || rest[fromIdx + 1]!.startsWith('-')) {
+				console.error('Missing path after --from.');
+				this.printAdoptUsage();
+				process.exit(1);
+			}
+			sourcePath = rest[fromIdx + 1];
+		} else if (rest.length === 1 && !rest[0]!.startsWith('-')) {
+			sourcePath = rest[0];
+		}
+		const cwd = process.cwd();
+		try {
+			await this.adoptProject.execute(cwd, typeArg, name, sourcePath);
+			const config = await this.loadConfig.execute(cwd);
+			const repo = config?.repo ?? { apps: {}, packages: {} };
+			const scope = getScope(repo);
+			const packageName = scope ? `@${scope}/${name}` : name;
+			console.log(
+				`\n✅ Adopted ${typeArg}/${name} as ${packageName}.`
+			);
+		} catch (err) {
+			console.error(err instanceof Error ? err.message : String(err));
+			process.exit(1);
+		}
+	}
+
+	private printAdoptUsage(): void {
+		console.error(
+			'Usage: buns mono adopt app <name> [--from <path>] | buns mono adopt pkg <name> [--from <path>]'
+		);
+	}
+
 	private parseAddDepFlags(args: string[]): {
 		target: string;
 		source: string;
@@ -410,6 +466,8 @@ export class MonoCommand {
 		console.log(
 			'       buns mono <alias> remove-dep | rm-dep | r-dep <source> Remove workspace dependency and sync config'
 		);
+		console.log('       buns mono adopt app <name> [--from <path>]   Adopt app (in-place or copy from path)');
+		console.log('       buns mono adopt pkg <name> [--from <path>]   Adopt package (in-place or copy from path)');
 		console.log('       buns mono remove app <name> Remove app from config');
 		console.log('       buns mono remove pkg <name> Remove package from config');
 		console.log('       buns mono <alias> <script>  Run script in workspace (e.g. buns mono app-example test)');
