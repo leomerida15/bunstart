@@ -36,7 +36,7 @@ export class AdoptProjectUseCase {
 		filesystem,
 		addApp,
 		addPackage,
-		runBunInstall
+		runBunInstall,
 	}: AdoptProjectUseCaseProps) {
 		this.loadConfig = loadConfig;
 		this.packageJson = packageJson;
@@ -50,8 +50,9 @@ export class AdoptProjectUseCase {
 		cwd: string,
 		type: 'app' | 'pkg',
 		name: string,
-		sourcePath?: string
+		sourcePath?: string,
 	): Promise<void> {
+		console.log('[AdoptProject] Starting adoption...');
 		const trimmedName = name?.trim();
 		if (!trimmedName) {
 			throw new Error('Workspace name is required.');
@@ -71,13 +72,10 @@ export class AdoptProjectUseCase {
 					`Source path ${sourceAbsolute} does not exist or has no package.json.`
 				);
 			}
-			if (await this.filesystem.existsDir(workspacePath)) {
-				throw new Error(
-					`Destination ${workspacePath} already exists. Remove it or choose another name.`
-				);
+			if (!(await this.filesystem.existsDir(workspacePath))) {
+				await this.filesystem.ensureDir(join(cwd, dir));
+				await this.filesystem.copyDirectory(sourceAbsolute, workspacePath);
 			}
-			await this.filesystem.ensureDir(join(cwd, dir));
-			await this.filesystem.copyDirectory(sourceAbsolute, workspacePath);
 		} else {
 			try {
 				await this.packageJson.read(workspacePath);
@@ -88,6 +86,7 @@ export class AdoptProjectUseCase {
 			}
 		}
 
+		console.log('[AdoptProject] Loading config...');
 		const config = await this.loadConfig.execute(cwd);
 		if (!config) {
 			throw new Error(`No bunstart.config.ts found in ${cwd}`);
@@ -101,14 +100,18 @@ export class AdoptProjectUseCase {
 
 		const packageName = `@${scope}/${trimmedName}`;
 
+		console.log('[AdoptProject] Patching package.json...');
 		await this.packageJson.patch(workspacePath, { name: packageName });
 
+		console.log('[AdoptProject] Registering in config...');
 		if (type === 'app') {
 			await this.addApp.execute(cwd, trimmedName, packageName, []);
 		} else {
 			await this.addPackage.execute(cwd, trimmedName, packageName, []);
 		}
 
+		console.log('[AdoptProject] Running bun install...');
 		await this.runBunInstall.execute(cwd);
+		console.log('[AdoptProject] Adoption complete!');
 	}
 }
