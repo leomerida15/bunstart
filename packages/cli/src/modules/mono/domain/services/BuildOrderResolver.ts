@@ -1,4 +1,5 @@
 import type { RepoConfig } from '../entities/RepoConfig';
+import type { ResolvedWorkspace } from '../value-objects/ResolvedWorkspace';
 
 /**
  * Returns workspace ids in topological order so that dependencies come before dependents.
@@ -8,8 +9,37 @@ import type { RepoConfig } from '../entities/RepoConfig';
 export function resolveBuildOrder(
 	state: RepoConfig,
 	workspaceId: string
+): string[];
+
+/**
+ * Returns workspace ids in topological order from ResolvedWorkspace[].
+ */
+export function resolveBuildOrder(
+	workspaces: ResolvedWorkspace[],
+	workspaceId: string
+): string[];
+
+export function resolveBuildOrder(
+	stateOrWorkspaces: RepoConfig | ResolvedWorkspace[],
+	workspaceId: string
 ): string[] {
-	const entry = state.apps[workspaceId] ?? state.packages[workspaceId];
+	const byId = new Map<string, { dependsOn: string[] }>();
+
+	if (Array.isArray(stateOrWorkspaces)) {
+		for (const w of stateOrWorkspaces) {
+			byId.set(w.id, { dependsOn: w.dependsOn });
+		}
+	} else {
+		const state = stateOrWorkspaces;
+		for (const [id, e] of Object.entries(state.apps)) {
+			byId.set(id, { dependsOn: e.dependsOn });
+		}
+		for (const [id, e] of Object.entries(state.packages)) {
+			byId.set(id, { dependsOn: e.dependsOn });
+		}
+	}
+
+	const entry = byId.get(workspaceId);
 	if (!entry) return [];
 
 	const visited = new Set<string>();
@@ -18,7 +48,7 @@ export function resolveBuildOrder(
 	function visit(id: string): void {
 		if (visited.has(id)) return;
 		visited.add(id);
-		const e = state.apps[id] ?? state.packages[id];
+		const e = byId.get(id);
 		if (e) {
 			for (const dep of e.dependsOn) {
 				visit(dep);

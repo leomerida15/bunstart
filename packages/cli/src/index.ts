@@ -1,8 +1,6 @@
 import { InitCommandFactory } from './modules/init/infra/factories/InitCommandFactory';
 import { MonoCommandFactory } from './modules/mono/infra/factories/MonoCommandFactory';
-import { ConfigUseCasesFactory } from './modules/config-state/infra/factories/ConfigUseCasesFactory';
 import { isNativeBunCommand } from './modules/mono/domain/services/NativeBunCommands';
-import { isWorkspaceAliasFromConfig } from './modules/mono/domain/services/WorkspaceResolver';
 
 /**
  * Displays the help message for the CLI.
@@ -110,10 +108,12 @@ async function main(): Promise<void> {
 					console.error('Error: No command provided.');
 					process.exit(1);
 				}
-				// Try run: buns <alias> [...commands] when in a monorepo with bunstart.config
-				const loadConfig = ConfigUseCasesFactory.createLoadConfigUseCase();
-				const config = await loadConfig.execute(process.cwd());
-				if (isWorkspaceAliasFromConfig(config, command)) {
+				// Try run: buns <alias> [...commands] when in a monorepo with package.json workspaces
+				const resolveWorkspaces =
+					MonoCommandFactory.createResolveWorkspacesAdapter();
+				const workspaces = await resolveWorkspaces.resolve(process.cwd());
+				const isAlias = workspaces.some((w) => w.id === command);
+				if (isAlias) {
 					const cwd = process.cwd();
 					// Ensure dependencies are built before build/dev/start
 					const isBuildOrDev =

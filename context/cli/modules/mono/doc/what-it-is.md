@@ -3,11 +3,12 @@
 **Path:** `packages/cli/src/modules/mono/`
 **Command:** `buns mono <subcommand>` and `buns <alias> <commands...>` (direct run)
 **Config section:** `.repo` in `bunstart.config.ts`
-**Status:** Partially implemented
+**Workspace source:** `package.json` field `workspaces` (Bun monorepo standard)
+**Status:** Implemented (core flows and dep commands)
 
 ## Purpose
 
-Manages monorepo workspaces: generate new apps/packages, build with dependency ordering, run scripts, execute bun commands in workspaces, and sync dependsOn from package.json. Owns all monorepo domain logic (entities, services, ports) and use cases. Depends on `config-state` for config persistence and `init` for scaffolding.
+Manages monorepo workspaces: generate new apps/packages, build with dependency ordering, run scripts, execute bun commands in workspaces, add/remove workspace dependencies, and sync dependsOn from package.json. Owns all monorepo domain logic (entities, services, ports) and use cases. Workspaces are resolved from `package.json` (field `workspaces`); `bunstart.config.ts` provides `dependsOn` and metadata. Depends on `config-state` for config persistence and `init` for scaffolding.
 
 ## Architecture
 
@@ -15,20 +16,35 @@ Manages monorepo workspaces: generate new apps/packages, build with dependency o
 mono/
   domain/
     entities/         RepoConfig, AppEntry, PackageEntry
-    value-objects/    WorkspaceId
-    ports/            RunInWorkspace.port, BuildWorkspace.port
-    services/         BuildOrderResolver, WorkspaceResolver
+    value-objects/    WorkspaceId, ResolvedWorkspace
+    ports/            RunInWorkspace.port, BuildWorkspace.port, SyncState.port,
+                      ResolveWorkspaces.port
+    services/         BuildOrderResolver, WorkspaceResolver, ReservedNames, NativeBunCommands
   app/
     MonoCommand.ts
-    use-cases/        AddApp, AddPackage, RunInWorkspace, EnsureDepsBuilt, EnsureConfigSynced, SyncDependsOn
+    use-cases/        AddApp, AddPackage, RemoveApp, RemovePackage, RunInWorkspace,
+                      EnsureDepsBuilt, EnsureConfigSynced, SyncDependsOn,
+                      AddWorkspaceDep, RemoveWorkspaceDep
   infra/
-    adapters/         BunRunInWorkspaceAdapter, BunBuildWorkspaceAdapter, SyncStateFileAdapter
+    adapters/         BunRunInWorkspaceAdapter, BunBuildWorkspaceAdapter, SyncStateFileAdapter,
+                      PackageJsonWorkspacesAdapter
     factories/        MonoCommandFactory
 ```
 
 Depends on:
 - `config-state`: LoadConfigUseCase, PatchConfigUseCase (reads/writes the `.repo` section of bunstart.config.ts).
-- `init`: MonorepoScaffolderPort (scaffoldApp, scaffoldPackage).
+- `init`: MonorepoScaffolderPort (scaffoldApp, scaffoldPackage), PackageJsonPort.
+
+## Workspace resolution
+
+Workspaces are resolved via `ResolveWorkspacesPort` (implemented by `PackageJsonWorkspacesAdapter`):
+
+1. Reads root `package.json` field `workspaces` (e.g. `["apps/*", "packages/*", "libs/*"]`).
+2. Resolves globs with Bun `Glob` to find workspace directories.
+3. Reads each workspace `package.json` for `name`.
+4. Merges `dependsOn` from `bunstart.config.ts` when present.
+
+Supports arbitrary directories (apps, packages, libs, etc.) as defined in `workspaces`. Bun requires the `workspaces` field for monorepos.
 
 ## Two entry points
 
@@ -38,89 +54,99 @@ Routed from `index.ts` case `'mono'` -> `MonoCommand.execute(args)`.
 
 ### Via `buns <alias> <commands...>` (direct run)
 
-Routed from `index.ts` default case. When the first arg is not a known CLI command (`init`, `mono`, `--help`, etc.), the entrypoint loads config and checks if it is a workspace alias. If yes, it delegates to mono's `RunInWorkspaceUseCase` and `EnsureDepsBuiltUseCase` (exposed via `MonoCommandFactory`).
+Routed from `index.ts` default case. When the first arg is not a known CLI command (`init`, `mono`, `--help`, etc.), the entrypoint uses `ResolveWorkspacesPort` to resolve workspaces from `package.json` and checks if the first arg is a workspace alias. If yes, it delegates to mono's `RunInWorkspaceUseCase` and `EnsureDepsBuiltUseCase` (exposed via `MonoCommandFactory`).
 
 ## Commands table
 
 | # | Command | Via | Status | Description |
 |---|---------|-----|--------|-------------|
-| 1 | `mono <alias> <commands...>` | `buns mono app-example test` | Pending | Execute any script or bun command in a workspace. Must distinguish scripts from native bun commands. Alias must not collide with reserved names. |
-| 2 | `mono start <alias>` | `buns mono start app-example` | Pending | Run start script (like build/dev but with `start`). |
-| 3 | `mono <alias> add <pkg>` | `buns mono app-example add lodash` | Pending | Native bun commands (add/install/remove/x/link etc.) in a workspace, without prepending `run`. |
-| 4 | `mono remove app\|pkg <name>` | `buns mono remove app my-app` | Pending | Remove workspace from config and optionally delete directory. |
-| 5 | `bun install` after generate | `buns mono gen app my-app` | Pending | Run `bun install` after generating a new workspace to resolve it in the lockfile. |
-| 6 | Distinguish `run` vs native commands | both entry points | Pending | Do not prepend `run` to native bun commands (`add`, `install`, `remove`, `x`, `link`, `unlink`, `pm`, `outdated`, `update`, `create`). Only prepend `run` for package.json scripts. |
+| 1 | `mono <alias> <script\|cmd> [args...]` | `buns mono app-example test` | Done | Execute any script or bun command in a workspace. Scripts get `run`; native bun commands (add, remove, etc.) do not. Alias must not collide with reserved names. |
+| 2 | `mono start <alias>` | `buns mono start app-example` | Done | Run start script (like build/dev but with `start`). |
+| 3 | `mono <alias> add \| a <pkg>` | `buns mono app-example add lodash` | Done | Native bun commands (add, a, install, remove, r, rm, x, link, etc.) in a workspace, without prepending `run`. |
+| 4 | `mono remove app\|pkg <name>` | `buns mono remove app my-app` | Done | Remove workspace from config (and directory). |
+| 5 | `bun install` after generate | `buns mono gen app my-app` | Done | Runs `bun install` at repo root after generating a new workspace. |
+| 6 | Distinguish `run` vs native commands | both entry points | Done | NativeBunCommands set; no `run` prefix for add, a, install, remove, rm, r, x, link, unlink, pm, outdated, update, create. |
 | 7 | `generate app\|pkg <name>` (alias: `gen`) | `buns mono gen app x` | Done | Registers in config + scaffolds directory. |
 | 8 | `build <alias>` | `buns mono build app-example` | Done | Builds workspace and dependsOn in topological order. |
 | 9 | `dev <alias>` | `buns mono dev app-example` | Done | Runs dev script (builds deps first). |
-| 10 | `sync` | `buns mono sync` | Done | Syncs dependsOn from package.json for all workspaces. |
+| 10 | `sync` | `buns mono sync` | Done | Syncs dependsOn from package.json for all workspaces (resolved from package.json `workspaces`). |
+| 11 | `mono <alias> add-dep \| a-dep <source> [flags]` | `buns mono exp add-dep pkg-example --dev` | Done | Add a workspace as dependency of the given alias (target). Runs `bun add <pkg>@workspace:*` in target, then syncs config. Flags: --dev, --peer, --optional, --exact. |
+| 12 | `mono <alias> remove-dep \| rm-dep \| r-dep <source>` | `buns mono exp remove-dep pkg-example` | Done | Remove a workspace dependency from the given alias. Runs `bun remove <pkg>` in target, then syncs config. |
+
+## Workspace dependency commands (add-dep, remove-dep)
+
+These commands follow the same pattern as native `bun add` / `bun remove`: the **target** workspace is the alias, the **source** is the workspace to add or remove as a dependency.
+
+- **Add:** `buns mono <alias> add-dep <source> [--dev|--peer|--optional|--exact]` or `buns mono <alias> a-dep <source> [...]`
+- **Remove:** `buns mono <alias> remove-dep <source>` or `rm-dep` / `r-dep`
+
+Example: `buns mono exp add-dep pkg-example --dev` adds `@test/pkg-example` to `exp`'s devDependencies and updates `bunstart.config.ts` dependsOn. Sync includes dependencies, devDependencies, peerDependencies, and optionalDependencies.
 
 ## Reserved names
 
-Workspace aliases (app or package names) must NOT collide with these reserved names. The `generate`/`gen` command and `AddAppUseCase`/`AddPackageUseCase` must validate against this list and reject with a clear error.
+Workspace aliases (app or package names) must NOT collide with these reserved names. Enforced in `mono/domain/services/ReservedNames.ts` (single source of truth). Used so that `buns mono <alias> <cmd>` can tell subcommands from workspace names.
 
-**Mono subcommands:**
-`generate`, `gen`, `build`, `dev`, `start`, `sync`, `remove`, `add`, `install`
+**Mono subcommands and dep commands:**
+`generate`, `gen`, `build`, `dev`, `start`, `sync`, `remove`, `add-dep`, `a-dep`, `remove-dep`, `rm-dep`, `r-dep`, `add`, `a`, `install`, `rm`, `r`
 
-**Global CLI commands:**
+**Global CLI:**
 `init`, `mono`
 
-**Native bun commands:**
-`add`, `install`, `remove`, `pm`, `x`, `create`, `init`, `link`, `unlink`, `outdated`, `update`, `run`
+**Other bun-like:**
+`pm`, `x`, `create`, `link`, `unlink`, `outdated`, `update`, `run`
 
 **Flags:**
 `help`, `--help`, `-h`, `--version`, `-v`
 
-Combined unique list:
-```
-generate, gen, build, dev, start, sync, remove, add, install, init, mono,
-pm, x, create, link, unlink, outdated, update, run, help, --help, -h, --version, -v
-```
-
-This list should live in the domain (e.g. `mono/domain/services/ReservedNames.ts` or as validation in `WorkspaceId`) so it is enforced in a single place.
+Full set in code: `ReservedNames.ts`.
 
 ## Scripts vs native bun commands
 
-When running commands in a workspace, the CLI must distinguish between:
+When running commands in a workspace (`mono <alias> <cmd> [args...]`), the CLI distinguishes:
 
-- **Scripts** (defined in package.json `scripts`): `build`, `dev`, `start`, `test`, `lint`, etc. These need `bun run <script>`.
-- **Native bun commands**: `add`, `install`, `remove`, `x`, `link`, `unlink`, `pm`, `outdated`, `update`, `create`. These need `bun <command>` directly (no `run` prefix).
+- **Scripts** (package.json `scripts`): e.g. `build`, `dev`, `start`, `test`. Executed as `bun run <script>`.
+- **Native bun commands:** Executed as `bun <command>` (no `run`). Set in `NativeBunCommands.ts`: `add`, `a`, `install`, `remove`, `rm`, `r`, `x`, `link`, `unlink`, `pm`, `outdated`, `update`, `create`.
 
-The current implementation always prepends `run` (in `index.ts` lines 130-133), which breaks native commands. The fix is to maintain a set of known native bun commands and skip the `run` prefix for those.
+Custom dep commands (`add-dep`, `a-dep`, `remove-dep`, `rm-dep`, `r-dep`) are handled in MonoCommand before the native/script branch; they are not passed to bun.
 
-```
-Native bun commands (do NOT prepend run):
-add, install, remove, pm, x, create, init, link, unlink, outdated, update
-```
-
-Everything else gets `run` prepended.
-
-## Flow: `mono <alias> <commands...>` (planned)
+## Flow: `mono <alias> <cmd> [args...]` (current)
 
 Example: `buns mono app-example test`
 
 1. MonoCommand.execute receives args `['app-example', 'test']`.
-2. `app-example` is not a known subcommand (not `generate`, `build`, `dev`, `sync`, `remove`).
-3. Load config, check if `app-example` is a workspace alias in `.repo`.
-4. If yes: delegate to `RunInWorkspaceUseCase.execute(cwd, 'app-example', ['run', 'test'])`.
-5. If no: show error "Unknown subcommand or workspace".
+2. `app-example` is not a top-level subcommand (generate, build, dev, start, sync, remove).
+3. Fallthrough: treat first arg as alias. `resolveWorkspaces.resolve(cwd)` returns workspaces from package.json; check if `app-example` is in workspaces.
+4. If yes: `handleRunInWorkspace('app-example', ['test'])`. `test` is not add-dep/remove-dep/build/dev/start, not native -> `['run', 'test']`. RunInWorkspaceUseCase runs `bun run test` in workspace dir (path from ResolvedWorkspace).
+5. If no: error "Unknown subcommand or workspace".
 
 Example: `buns mono app-example add lodash`
 
-1. Same routing as above.
-2. `add` is a native bun command -> pass as `['add', 'lodash']` (no `run` prefix).
-3. `RunInWorkspaceUseCase` executes `bun add lodash` in `apps/app-example/`.
+1. Same routing; `handleRunInWorkspace('app-example', ['add', 'lodash'])`.
+2. `add` is in NativeBunCommands -> `bunArgs = ['add', 'lodash']` (no `run`).
+3. RunInWorkspaceUseCase runs `bun add lodash` in the workspace dir (e.g. `apps/app-example/`).
+
+Example: `buns mono exp add-dep pkg-example --dev`
+
+1. Fallthrough with alias `exp`, extraArgs `['add-dep', 'pkg-example', '--dev']`.
+2. handleRunInWorkspace(exp, ['add-dep', 'pkg-example', '--dev']): cmd is `add-dep` -> handleAddDep([exp, 'pkg-example', '--dev']).
+3. AddWorkspaceDepUseCase: resolve workspaces via ResolveWorkspacesPort; get package name and workspace path for exp; run `bun add --dev @scope/pkg-example@workspace:*` in exp's dir; then SyncDependsOn for exp.
 
 ## Flow: `buns <alias> <commands...>` (direct run, current)
 
 Example: `buns app-example build`
 
 1. `index.ts` default case: `command = 'app-example'`, `commandArgs = ['build']`.
-2. Loads config, checks `isWorkspaceAliasFromConfig(config, 'app-example')` -> true.
+2. Resolves workspaces via `ResolveWorkspacesPort`; checks `workspaces.some(w => w.id === command)` -> true.
 3. `build` triggers EnsureDepsBuilt first.
 4. Prepends `run` -> `['run', 'build']`.
 5. `RunInWorkspaceUseCase.execute(cwd, 'app-example', ['run', 'build'])`.
-6. Adapter runs `bun run build` in `apps/app-example/`.
+6. Adapter runs `bun run build` in the workspace dir (from ResolvedWorkspace path).
+
+## Flow: `mono sync`
+
+1. `handleSync()`: resolves workspaces via ResolveWorkspacesPort.
+2. If no workspaces, error. Else, for each workspace: SyncDependsOn.execute(cwd, w.id).
+3. SyncDependsOn reads workspace package.json, infers dependsOn from deps that match other workspaces, patches bunstart.config.
 
 ## Flow: `mono generate app my-app`
 
@@ -129,31 +155,34 @@ Example: `buns app-example build`
 3. Validates `my-app` is not a reserved name.
 4. Calls AddAppUseCase (loadConfig + patchConfig) -> updates `.repo` section.
 5. Calls scaffolder.scaffoldApp(cwd, 'my-app', 'myorg') -> creates `apps/my-app/`.
-6. (Pending) Runs `bun install` to resolve the new workspace.
+6. Runs `bun install` at repo root (RunBunInstallPort) to resolve the new workspace.
 
 ## Flow: `mono build app-example`
 
-1. Loads config, gets repo section.
-2. **EnsureConfigSyncedUseCase.execute(cwd)** — if no `.bunstart/sync-state.json` or any workspace `package.json` has mtime greater than lastSyncTime, runs sync for all workspaces (same as `mono sync`) and writes state. Keeps bunstart.config.ts dependsOn in sync without requiring the user to run `mono sync` manually.
-3. EnsureDepsBuiltUseCase.execute(cwd, 'app-example') -> BuildOrderResolver, then BunBuildWorkspaceAdapter per dependency.
+1. Resolves workspaces via ResolveWorkspacesPort.
+2. **EnsureConfigSyncedUseCase.execute(cwd)** — resolves workspaces; if no `.bunstart/sync-state.json` or any workspace `package.json` has mtime greater than lastSyncTime, runs sync for all workspaces (same as `mono sync`) and writes state. SyncState uses workspace paths (e.g. `apps/app-example`, `packages/pkg-example`). Keeps bunstart.config.ts dependsOn in sync without requiring the user to run `mono sync` manually.
+3. EnsureDepsBuiltUseCase.execute(cwd, 'app-example') -> BuildOrderResolver (from ResolvedWorkspace[]), then BunBuildWorkspaceAdapter per dependency (path from workspacePath).
 4. RunInWorkspaceUseCase.execute(cwd, 'app-example', ['run', 'build']).
 
 ## What is done
 
-- Full domain in mono (RepoConfig, AppEntry, PackageEntry, WorkspaceResolver, BuildOrderResolver).
-- Use cases use config-state (LoadConfig, PatchConfig) for persistence of `.repo` section.
-- generate/gen, build, dev, sync subcommands.
-- MonoCommandFactory wires config-state + mono use cases; exposes createEnsureDepsBuiltUseCase(), createRunInWorkspaceUseCase(), and createEnsureConfigSyncedUseCase() for index.ts run routing.
-- Before build/dev/start (both `buns mono build <alias>` and `buns <alias> build`), EnsureConfigSyncedUseCase runs when needed (first run or package.json changed) so bunstart.config.ts dependsOn stay in sync without manual `mono sync`.
-- Direct run via `buns <alias> <commands>` works for scripts (build, dev).
+- Full domain in mono (RepoConfig, AppEntry, PackageEntry, ResolvedWorkspace, WorkspaceResolver, BuildOrderResolver, ReservedNames, NativeBunCommands).
+- **ResolveWorkspacesPort** + PackageJsonWorkspacesAdapter: resolves workspaces from package.json `workspaces` field; merges dependsOn from bunstart.config; supports arbitrary dirs (apps, packages, libs, etc.).
+- Use cases use ResolveWorkspacesPort for workspace list and paths; config-state (LoadConfig, PatchConfig) for persistence of `.repo` section (dependsOn).
+- SyncState uses workspace paths (string[]) instead of apps/packages ids.
+- generate/gen, build, dev, start, sync, remove app|pkg subcommands.
+- **mono &lt;alias&gt; &lt;cmd&gt; [args]:** Fallthrough resolves workspaces; treats first arg as workspace alias; handleRunInWorkspace dispatches to add-dep/a-dep, remove-dep/rm-dep/r-dep, build/dev/start, or native bun commands (add, a, remove, r, rm, etc.) vs run script.
+- AddWorkspaceDep and RemoveWorkspaceDep use ResolveWorkspacesPort; add/remove workspace as dependency (bun add/remove in target dir + sync dependsOn). Invoked as `mono <alias> add-dep|a-dep <source> [flags]` and `mono <alias> remove-dep|rm-dep|r-dep <source>`.
+- SyncDependsOn uses ResolveWorkspacesPort for path and nameToId; reads dependencies, devDependencies, peerDependencies, optionalDependencies from package.json to infer dependsOn; writes to repo.apps/repo.packages (dir===apps -> apps, else packages).
+- `mono` with no args: showUsage lists workspaces from package.json.
+- Native bun command set (add, a, install, remove, rm, r, x, link, unlink, pm, outdated, update, create); no `run` prefix for these.
+- Reserved names (including add-dep, a-dep, remove-dep, rm-dep, r-dep, a, r, rm) in ReservedNames.ts.
+- MonoCommandFactory wires all use cases; exposes createEnsureDepsBuiltUseCase(), createRunInWorkspaceUseCase(), createEnsureConfigSyncedUseCase(), createResolveWorkspacesAdapter() for index.ts run routing.
+- Before build/dev/start, EnsureConfigSyncedUseCase runs when needed (SyncState + workspace paths) so bunstart.config.ts dependsOn stay in sync without manual `mono sync`.
+- Direct run via `buns <alias> <commands>` uses ResolveWorkspacesPort to validate alias; works with package.json workspaces only (no bunstart.config required for run).
+- bun install at repo root after generate (runBunInstall).
 
 ## What is missing / TODO
 
-- **#1 Generic `mono <alias> <commands>`:** Fallthrough in MonoCommand currently just logs. Should check if subcommand is a workspace alias and delegate to RunInWorkspaceUseCase.
-- **#2 `start` subcommand:** Recognized but not wired. Should work like build/dev.
-- **#3 Native bun commands in workspace:** `buns mono app-example add lodash` must not prepend `run`. Requires native command detection.
-- **#4 `remove app|pkg <name>`:** Not implemented. Should remove from config and optionally delete directory.
-- **#5 `bun install` after generate:** Generate does not run `bun install` to resolve the new workspace.
-- **#6 Run vs native distinction:** Both entry points (index.ts and MonoCommand) always prepend `run`. Must skip for native bun commands.
-- **#7 Reserved name validation:** `generate`/`AddApp`/`AddPackage` do not validate workspace names against reserved names. Could create conflicts.
-- **Tests:** No unit tests for MonoCommand, use cases, or domain services.
+- **Reserved name validation on generate:** Ensure AddAppUseCase / AddPackageUseCase (or MonoCommand handleGenerate) reject workspace names that are in ReservedNames, so no one can create a workspace named e.g. `add-dep` or `build`.
+- **Tests:** Unit tests for MonoCommand, use cases (AddWorkspaceDep, RemoveWorkspaceDep, SyncDependsOn, etc.), and domain services.

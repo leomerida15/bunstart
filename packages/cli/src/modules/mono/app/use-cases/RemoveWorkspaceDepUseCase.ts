@@ -1,10 +1,15 @@
-import { getPackageName, isWorkspaceAlias } from '../../domain/services/WorkspaceResolver';
-import type { LoadConfigUseCase } from '../../../config-state/app/use-cases/LoadConfigUseCase';
+import {
+	getPackageName,
+	getWorkspaceById,
+	isWorkspaceAlias
+} from '../../domain/services/WorkspaceResolver';
+import { workspacePath } from '../../domain/value-objects/ResolvedWorkspace';
+import type { ResolveWorkspacesPort } from '../../domain/ports/ResolveWorkspaces.port';
 import type { RunInWorkspacePort } from '../../domain/ports/RunInWorkspace.port';
 import type { SyncDependsOnFromPackageJsonUseCase } from './SyncDependsOnFromPackageJsonUseCase';
 
 export interface RemoveWorkspaceDepUseCaseProps {
-	loadConfig: LoadConfigUseCase;
+	resolveWorkspaces: ResolveWorkspacesPort;
 	runInWorkspace: RunInWorkspacePort;
 	syncDependsOn: SyncDependsOnFromPackageJsonUseCase;
 }
@@ -14,16 +19,16 @@ export interface RemoveWorkspaceDepUseCaseProps {
  * Runs `bun remove <packageName>` in the target workspace, then syncs config.
  */
 export class RemoveWorkspaceDepUseCase {
-	private readonly loadConfig: LoadConfigUseCase;
+	private readonly resolveWorkspaces: ResolveWorkspacesPort;
 	private readonly runInWorkspace: RunInWorkspacePort;
 	private readonly syncDependsOn: SyncDependsOnFromPackageJsonUseCase;
 
 	constructor({
-		loadConfig,
+		resolveWorkspaces,
 		runInWorkspace,
 		syncDependsOn
 	}: RemoveWorkspaceDepUseCaseProps) {
-		this.loadConfig = loadConfig;
+		this.resolveWorkspaces = resolveWorkspaces;
 		this.runInWorkspace = runInWorkspace;
 		this.syncDependsOn = syncDependsOn;
 	}
@@ -33,29 +38,33 @@ export class RemoveWorkspaceDepUseCase {
 		targetAlias: string,
 		sourceAlias: string
 	): Promise<void> {
-		const config = await this.loadConfig.execute(cwd);
-		if (!config) {
-			throw new Error('No bunstart.config.ts found. Run this from the monorepo root.');
+		const workspaces = await this.resolveWorkspaces.resolve(cwd);
+		if (workspaces.length === 0) {
+			throw new Error(
+				'No workspaces found. Ensure package.json has workspaces field.'
+			);
 		}
-		const repo = config.repo ?? { apps: {}, packages: {} };
 
-		if (!isWorkspaceAlias(repo, targetAlias)) {
+		if (!isWorkspaceAlias(workspaces, targetAlias)) {
 			throw new Error(`Unknown workspace: ${targetAlias}`);
 		}
-		if (!isWorkspaceAlias(repo, sourceAlias)) {
+		if (!isWorkspaceAlias(workspaces, sourceAlias)) {
 			throw new Error(`Unknown workspace: ${sourceAlias}`);
 		}
 		if (targetAlias === sourceAlias) {
 			throw new Error('Target and source workspace must be different.');
 		}
 
-		const packageName = getPackageName(repo, sourceAlias);
+		const packageName = getPackageName(workspaces, sourceAlias);
 		if (!packageName) {
 			throw new Error(`Unknown workspace: ${sourceAlias}`);
 		}
 
-		const workspaceDir =
-			targetAlias in repo.apps ? `apps/${targetAlias}` : `packages/${targetAlias}`;
+		const targetWorkspace = getWorkspaceById(workspaces, targetAlias);
+		if (!targetWorkspace) {
+			throw new Error(`Unknown workspace: ${targetAlias}`);
+		}
+		const workspaceDir = workspacePath(targetWorkspace);
 
 		await this.runInWorkspace.run(cwd, workspaceDir, ['remove', packageName]);
 		await this.syncDependsOn.execute(cwd, targetAlias);

@@ -7,6 +7,7 @@ const RESERVED_NAMES = new Set([
 	'sync',
 	'remove',
 	'add-dep',
+	'a-dep',
 	'remove-dep',
 	'rm-dep',
 	'r-dep',

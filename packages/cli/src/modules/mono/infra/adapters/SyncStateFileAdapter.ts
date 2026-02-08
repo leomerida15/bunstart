@@ -10,10 +10,7 @@ interface SyncStateJson {
 }
 
 export class SyncStateFileAdapter implements SyncStatePort {
-	async shouldSync(
-		cwd: string,
-		workspaceIds: { apps: string[]; packages: string[] }
-	): Promise<boolean> {
+	async shouldSync(cwd: string, workspacePaths: string[]): Promise<boolean> {
 		const statePath = join(cwd, SYNC_STATE_DIR, SYNC_STATE_FILE);
 		let lastSyncTime: number;
 		try {
@@ -26,12 +23,9 @@ export class SyncStateFileAdapter implements SyncStatePort {
 			return true;
 		}
 
-		const paths: string[] = [
-			...workspaceIds.apps.map((id) => join(cwd, 'apps', id, 'package.json')),
-			...workspaceIds.packages.map((id) =>
-				join(cwd, 'packages', id, 'package.json')
-			)
-		];
+		const paths: string[] = workspacePaths.map((p) =>
+			join(cwd, p, 'package.json')
+		);
 		for (const p of paths) {
 			try {
 				if (existsSync(p)) {

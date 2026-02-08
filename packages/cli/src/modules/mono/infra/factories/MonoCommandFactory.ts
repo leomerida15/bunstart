@@ -15,6 +15,7 @@ import { BunBuildWorkspaceAdapter } from '../adapters/BunBuildWorkspaceAdapter';
 import { BunRunBunInstallAdapter } from '../adapters/BunRunBunInstallAdapter';
 import { SyncStateFileAdapter } from '../adapters/SyncStateFileAdapter';
 import { PackageJsonAdapter } from '../../../init/infra/adapters/PackageJsonAdapter';
+import { PackageJsonWorkspacesAdapter } from '../adapters/PackageJsonWorkspacesAdapter';
 import { NodeFilesystemAdapter } from '../../../init/infra/adapters/NodeFilesystemAdapter';
 import { MonorepoScaffolderAdapter } from '../../../init/infra/adapters/MonorepoScaffolderAdapter';
 
@@ -27,24 +28,29 @@ export class MonoCommandFactory {
 	private static runAdapter = new BunRunInWorkspaceAdapter();
 	private static buildAdapter = new BunBuildWorkspaceAdapter();
 	private static packageJson = new PackageJsonAdapter();
+	private static resolveWorkspacesAdapter = new PackageJsonWorkspacesAdapter({
+		packageJson: this.packageJson,
+		loadConfig: this.loadConfig
+	});
 	private static syncStateAdapter = new SyncStateFileAdapter();
 	private static syncDependsOn = new SyncDependsOnFromPackageJsonUseCase({
+		resolveWorkspaces: this.resolveWorkspacesAdapter,
 		loadConfig: this.loadConfig,
 		patchConfig: this.patchConfig,
 		packageJson: this.packageJson
 	});
 	private static addWorkspaceDep = new AddWorkspaceDepUseCase({
-		loadConfig: this.loadConfig,
+		resolveWorkspaces: this.resolveWorkspacesAdapter,
 		runInWorkspace: this.runAdapter,
 		syncDependsOn: this.syncDependsOn
 	});
 	private static removeWorkspaceDep = new RemoveWorkspaceDepUseCase({
-		loadConfig: this.loadConfig,
+		resolveWorkspaces: this.resolveWorkspacesAdapter,
 		runInWorkspace: this.runAdapter,
 		syncDependsOn: this.syncDependsOn
 	});
 	private static ensureConfigSynced = new EnsureConfigSyncedUseCase({
-		loadConfig: this.loadConfig,
+		resolveWorkspaces: this.resolveWorkspacesAdapter,
 		syncDependsOn: this.syncDependsOn,
 		syncState: this.syncStateAdapter
 	});
@@ -58,6 +64,7 @@ export class MonoCommandFactory {
 		});
 		return new MonoCommand({
 			loadConfig: this.loadConfig,
+			resolveWorkspaces: this.resolveWorkspacesAdapter,
 			addApp: new AddAppUseCase({
 				loadConfig: this.loadConfig,
 				patchConfig: this.patchConfig
@@ -87,16 +94,20 @@ export class MonoCommandFactory {
 
 	public static createEnsureDepsBuiltUseCase(): EnsureDepsBuiltUseCase {
 		return new EnsureDepsBuiltUseCase({
-			loadConfig: this.loadConfig,
+			resolveWorkspaces: this.resolveWorkspacesAdapter,
 			buildWorkspace: this.buildAdapter
 		});
 	}
 
 	public static createRunInWorkspaceUseCase(): RunInWorkspaceUseCase {
 		return new RunInWorkspaceUseCase({
-			loadConfig: this.loadConfig,
+			resolveWorkspaces: this.resolveWorkspacesAdapter,
 			runInWorkspace: this.runAdapter
 		});
+	}
+
+	public static createResolveWorkspacesAdapter(): PackageJsonWorkspacesAdapter {
+		return this.resolveWorkspacesAdapter;
 	}
 
 	public static createEnsureConfigSyncedUseCase(): EnsureConfigSyncedUseCase {

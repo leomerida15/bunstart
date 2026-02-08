@@ -1,9 +1,10 @@
-import { getPackageName } from '../../domain/services/WorkspaceResolver';
+import { getWorkspaceById } from '../../domain/services/WorkspaceResolver';
+import { workspacePath } from '../../domain/value-objects/ResolvedWorkspace';
 import type { RunInWorkspacePort } from '../../domain/ports/RunInWorkspace.port';
-import type { LoadConfigUseCase } from '../../../config-state/app/use-cases/LoadConfigUseCase';
+import type { ResolveWorkspacesPort } from '../../domain/ports/ResolveWorkspaces.port';
 
 export interface RunInWorkspaceUseCaseProps {
-	loadConfig: LoadConfigUseCase;
+	resolveWorkspaces: ResolveWorkspacesPort;
 	runInWorkspace: RunInWorkspacePort;
 }
 
@@ -11,28 +12,28 @@ export interface RunInWorkspaceUseCaseProps {
  * Resolves a workspace alias to its directory and runs the given command there.
  */
 export class RunInWorkspaceUseCase {
-	private readonly loadConfig: LoadConfigUseCase;
+	private readonly resolveWorkspaces: ResolveWorkspacesPort;
 	private readonly runInWorkspace: RunInWorkspacePort;
 
-	constructor({ loadConfig, runInWorkspace }: RunInWorkspaceUseCaseProps) {
-		this.loadConfig = loadConfig;
+	constructor({ resolveWorkspaces, runInWorkspace }: RunInWorkspaceUseCaseProps) {
+		this.resolveWorkspaces = resolveWorkspaces;
 		this.runInWorkspace = runInWorkspace;
 	}
 
 	async execute(cwd: string, alias: string, args: string[]): Promise<void> {
-		const config = await this.loadConfig.execute(cwd);
-		if (!config) {
-			throw new Error(`No bunstart.config.ts found in ${cwd}`);
+		const workspaces = await this.resolveWorkspaces.resolve(cwd);
+		if (workspaces.length === 0) {
+			throw new Error(
+				'No workspaces found. Ensure package.json has workspaces field.'
+			);
 		}
-		const repo = config.repo ?? { apps: {}, packages: {} };
 
-		const packageName = getPackageName(repo, alias);
-		if (!packageName) {
+		const workspace = getWorkspaceById(workspaces, alias);
+		if (!workspace) {
 			throw new Error(`Unknown workspace alias: ${alias}`);
 		}
 
-		const workspaceDir =
-			alias in repo.apps ? `apps/${alias}` : `packages/${alias}`;
+		const workspaceDir = workspacePath(workspace);
 		await this.runInWorkspace.run(cwd, workspaceDir, args);
 	}
 }

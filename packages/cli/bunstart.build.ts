@@ -24,7 +24,7 @@ export const buildConfig = {
     target: "bun" as const,
     format: "esm" as const,
     minify: true,
-    sourcemap: true,
+    sourcemap: false,
     outputPath: "dist/index.js",
     shebang: "#!/usr/bin/env bun\n"
 };

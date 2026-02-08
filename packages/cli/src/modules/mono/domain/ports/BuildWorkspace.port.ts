@@ -5,8 +5,7 @@ export interface BuildWorkspacePort {
 	/**
 	 * Runs the build script for the given workspace.
 	 * @param cwd - Monorepo root
-	 * @param workspaceId - Alias (e.g. 'pkg-example')
-	 * @param kind - 'app' or 'package' (directory under apps/ or packages/)
+	 * @param workspaceDir - Relative path to workspace (e.g. 'packages/pkg-a')
 	 */
-	build(cwd: string, workspaceId: string, kind: 'app' | 'package'): Promise<void>;
+	build(cwd: string, workspaceDir: string): Promise<void>;
 }
