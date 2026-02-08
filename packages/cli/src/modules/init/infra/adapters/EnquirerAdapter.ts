@@ -108,17 +108,19 @@ export class EnquirerAdapter implements UserInterfacePort {
 	 * Prompts the user to enter a monorepo alias.
 	 *
 	 * @param {string} [message='Monorepo alias (e.g. myorg or @myorg):'] - The prompt message
+	 * @param {string} [initial] - Initial value for the input
 	 * @returns {Promise<string | null>} The alias string, or null if cancelled
 	 */
 	public async askAlias(
-		message: string = 'Monorepo alias (e.g. myorg or @myorg):'
+		message: string = 'Monorepo alias (e.g. myorg or @myorg):',
+		initial?: string
 	): Promise<string | null> {
 		try {
 			const response = await Enquirer.prompt<{ alias: string }>({
 				type: 'input',
 				name: 'alias',
 				message,
-				initial: 'myorg'
+				initial: initial ?? 'myorg'
 			});
 			return response.alias?.trim() ?? null;
 		} catch (error) {
@@ -130,6 +132,80 @@ export class EnquirerAdapter implements UserInterfacePort {
 			}
 			throw new Error(
 				`Failed to prompt for alias: ${error instanceof Error ? error.message : String(error)}`
+			);
+		}
+	}
+
+	/**
+	 * Prompts the user to enter the project name.
+	 *
+	 * @param {string} [message='Project name:'] - The prompt message
+	 * @param {string} [defaultName] - Default value (e.g. current directory name)
+	 * @returns {Promise<string | null>} The project name, or null if cancelled
+	 */
+	public async promptProjectName(
+		message: string = 'Project name:',
+		defaultName?: string
+	): Promise<string | null> {
+		try {
+			const response = await Enquirer.prompt<{ projectName: string }>({
+				type: 'input',
+				name: 'projectName',
+				message,
+				initial: defaultName ?? ''
+			});
+			return response.projectName?.trim() ?? null;
+		} catch (error) {
+			if (error && typeof error === 'object' && 'name' in error) {
+				const err = error as { name?: string };
+				if (err.name === 'Error' || err.name === 'CancelledPromptError') {
+					return null;
+				}
+			}
+			throw new Error(
+				`Failed to prompt for project name: ${error instanceof Error ? error.message : String(error)}`
+			);
+		}
+	}
+
+	/**
+	 * Prompts the user to select a React variant.
+	 *
+	 * @param {string} [message='React variant:'] - The prompt message
+	 * @returns {Promise<'react' | 'tailwind' | 'shadcn' | null>} The selected variant, or null if cancelled
+	 */
+	public async selectReactVariant(
+		message: string = 'React variant:'
+	): Promise<'react' | 'tailwind' | 'shadcn' | null> {
+		try {
+			const response = await Enquirer.prompt<{ variant: string }>({
+				type: 'select',
+				name: 'variant',
+				message,
+				choices: [
+					{ name: 'react', message: 'React (clean)', value: 'react' },
+					{
+						name: 'tailwind',
+						message: 'React + Tailwind CSS',
+						value: 'tailwind'
+					},
+					{
+						name: 'shadcn',
+						message: 'React + shadcn/ui',
+						value: 'shadcn'
+					}
+				]
+			});
+			return response.variant as 'react' | 'tailwind' | 'shadcn';
+		} catch (error) {
+			if (error && typeof error === 'object' && 'name' in error) {
+				const err = error as { name?: string };
+				if (err.name === 'Error' || err.name === 'CancelledPromptError') {
+					return null;
+				}
+			}
+			throw new Error(
+				`Failed to prompt for React variant: ${error instanceof Error ? error.message : String(error)}`
 			);
 		}
 	}

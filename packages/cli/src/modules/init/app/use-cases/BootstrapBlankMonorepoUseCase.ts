@@ -39,12 +39,16 @@ export class BootstrapBlankMonorepoUseCase {
 		this.initializeConfig = initializeConfig;
 	}
 
-	public async execute(cwd: string): Promise<void> {
+	public async execute(
+		cwd: string,
+		options: { projectName: string }
+	): Promise<void> {
 		console.log('\nRunning bun init...');
 		await this.bunRuntime.initBlank(cwd);
 
 		const aliasInput = await this.userInterface.askAlias(
-			'Monorepo alias (e.g. myorg or @myorg):'
+			'Monorepo alias (e.g. myorg or @myorg):',
+			options.projectName
 		);
 		if (aliasInput === null) {
 			console.log('\nOperation cancelled.');

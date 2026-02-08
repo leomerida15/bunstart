@@ -40,7 +40,30 @@ export interface UserInterfacePort {
 	 * Prompts the user to enter a monorepo alias.
 	 *
 	 * @param {string} [message] - The prompt message to display
+	 * @param {string} [initial] - Initial value for the input
 	 * @returns {Promise<string | null>} The alias string, or null if cancelled
 	 */
-	askAlias(message?: string): Promise<string | null>;
+	askAlias(message?: string, initial?: string): Promise<string | null>;
+
+	/**
+	 * Prompts the user to enter the project name.
+	 *
+	 * @param {string} [message] - The prompt message to display
+	 * @param {string} [defaultName] - Default value (e.g. current directory name)
+	 * @returns {Promise<string | null>} The project name, or null if cancelled
+	 */
+	promptProjectName(
+		message?: string,
+		defaultName?: string
+	): Promise<string | null>;
+
+	/**
+	 * Prompts the user to select a React variant (clean, Tailwind, or shadcn).
+	 *
+	 * @param {string} [message] - The prompt message to display
+	 * @returns {Promise<'react' | 'tailwind' | 'shadcn' | null>} The selected variant, or null if cancelled
+	 */
+	selectReactVariant(
+		message?: string
+	): Promise<'react' | 'tailwind' | 'shadcn' | null>;
 }

@@ -2,7 +2,7 @@
 
 **Goal:** Implementar la lógica reutilizable que aplica las reglas bunstart a un proyecto ya creado por `bun init` (blank, react, library). Así api-rest, frontend-react y library solo ejecutan el template de Bun y luego aplican estas reglas.
 
-**Status:** Not started
+**Status:** Done
 
 ## Reglas bunstart (single-package)
 
@@ -14,12 +14,12 @@
 
 | # | Task | Status | Files |
 |---|------|--------|-------|
-| 1 | Create `init/domain/ports/ApplyBunstartRules.port.ts` — `execute(cwd: string, options?: { entryExt?: 'ts' \| 'tsx' }): Promise<void>` | pending | new |
-| 2 | Create `init/app/use-cases/ApplyBunstartRulesUseCase.ts` — orquesta: leer package.json, mover entry a src/, escribir bunstart.build.ts y bunstart.watch.ts, parchear package.json con scripts y module/main/types | pending | new |
-| 3 | Create templates en `src/utils/template/single-package/` — bunstart.build.ts.template, bunstart.watch.ts.template (entrypoints `src/index.ts` genérico; tsx si options.entryExt) | pending | new |
-| 4 | Create `init/infra/adapters/ApplyBunstartRulesAdapter.ts` — implementa el port: FilesystemPort, PackageJsonPort; lógica para mover archivo, copiar templates, interpolación mínima | pending | new |
-| 5 | Wire ApplyBunstartRulesUseCase en InitCommandFactory (para uso desde Bootstrap* use cases) | pending | modify |
-| 6 | Build and verify — unit test o e2e: en un dir con `bun init -y`, ejecutar ApplyBunstartRules y comprobar que existe src/index.ts, bunstart.build.ts, scripts en package.json | pending | verify |
+| 1 | Create `init/domain/ports/ApplyBunstartRules.port.ts` — `execute(cwd: string, options?: { entryExt?: 'ts' \| 'tsx' }): Promise<void>` | done | new |
+| 2 | Create `init/app/use-cases/ApplyBunstartRulesUseCase.ts` — orquesta: leer package.json, mover entry a src/, escribir bunstart.build.ts y bunstart.watch.ts, parchear package.json con scripts y module/main/types | done | new |
+| 3 | Create templates en `src/utils/template/single-package/` — bunstart.build.ts.template, bunstart.watch.ts.template (entrypoints `src/index.ts` genérico; tsx si options.entryExt) | done | new |
+| 4 | Create `init/infra/adapters/ApplyBunstartRulesAdapter.ts` — implementa el port: FilesystemPort, PackageJsonPort; lógica para mover archivo, copiar templates, interpolación mínima | done | new |
+| 5 | Wire ApplyBunstartRulesUseCase en InitCommandFactory (para uso desde Bootstrap* use cases) | done | modify |
+| 6 | Build and verify — unit test o e2e: en un dir con `bun init -y`, ejecutar ApplyBunstartRules y comprobar que existe src/index.ts, bunstart.build.ts, scripts en package.json | done | verify |
 
 ## Acceptance criteria
 

@@ -112,6 +112,7 @@ export class MonorepoScaffolderAdapter implements MonorepoScaffolderPort {
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/src-index.ts.template'), target: join(appExampleDir, 'src', 'index.ts') },
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/bunstart.build.ts.template'), target: join(appExampleDir, 'bunstart.build.ts') },
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/bunstart.watch.ts.template'), target: join(appExampleDir, 'bunstart.watch.ts') },
+			{ source: join(TEMPLATES_BASE, 'apps/app-example/bunstart.start.ts.template'), target: join(appExampleDir, 'bunstart.start.ts') },
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/tsconfig.json.template'), target: join(appExampleDir, 'tsconfig.json') }
 		];
 
@@ -130,6 +131,7 @@ export class MonorepoScaffolderAdapter implements MonorepoScaffolderPort {
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/src-index.ts.template'), target: join(appDir, 'src', 'index.ts') },
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/bunstart.build.ts.template'), target: join(appDir, 'bunstart.build.ts') },
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/bunstart.watch.ts.template'), target: join(appDir, 'bunstart.watch.ts') },
+			{ source: join(TEMPLATES_BASE, 'apps/app-example/bunstart.start.ts.template'), target: join(appDir, 'bunstart.start.ts') },
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/tsconfig.json.template'), target: join(appDir, 'tsconfig.json') }
 		];
 

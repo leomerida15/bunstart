@@ -2,7 +2,7 @@
 
 **Goal:** Completar el flujo `buns init` → API REST: ejecutar `bun init -y` (Blank), aplicar reglas bunstart, instalar dependencias. Sin bunstart.config en init; el usuario puede usar sync después si está en monorepo.
 
-**Status:** Not started
+**Status:** Done
 
 ## Scope
 
@@ -13,12 +13,12 @@
 
 | # | Task | Status | Files |
 |---|------|--------|-------|
-| 1 | Create `init/app/use-cases/BootstrapApiRestUseCase.ts` — depende de BunRuntimePort, ApplyBunstartRulesPort (o UseCase); flujo: initBlank(cwd), ApplyBunstartRules.execute(cwd), installDependencies(cwd) | pending | new |
-| 2 | BunRuntimePort — confirmar que initBlank(cwd) ejecuta `bun init -y` en cwd (ya existe en BunRuntimeAdapter) | pending | verify |
-| 3 | InitCommand — cuando selectedTemplate.type === 'api-rest', llamar BootstrapApiRestUseCase.execute(cwd) en lugar de "Configuring project..." | pending | modify |
-| 4 | InitCommandFactory — instanciar BootstrapApiRestUseCase e inyectarlo en InitCommand (o pasar un mapa template → use case para escalar a más tipos) | pending | modify |
+| 1 | Create `init/app/use-cases/BootstrapApiRestUseCase.ts` — depende de BunRuntimePort, ApplyBunstartRulesPort (o UseCase); flujo: initBlank(cwd), ApplyBunstartRules.execute(cwd), installDependencies(cwd) | done | new |
+| 2 | BunRuntimePort — confirmar que initBlank(cwd) ejecuta `bun init -y` en cwd (ya existe en BunRuntimeAdapter) | done | verify |
+| 3 | InitCommand — cuando selectedTemplate.type === 'api-rest', llamar BootstrapApiRestUseCase.execute(cwd) en lugar de "Configuring project..." | done | modify |
+| 4 | InitCommandFactory — instanciar BootstrapApiRestUseCase e inyectarlo en InitCommand (o pasar un mapa template → use case para escalar a más tipos) | done | modify |
 | 5 | (Opcional) UserInterfacePort.askProjectName — prompt para nombre del proyecto; usar como nombre en package.json si se desea; puede diferirse | deferred | - |
-| 6 | Build and verify — `buns init`, elegir API REST, comprobar que se crea index.ts → src/index.ts, bunstart.build.ts, bunstart.watch.ts, scripts, bun install | pending | verify |
+| 6 | Build and verify — `buns init`, elegir API REST, comprobar que se crea index.ts → src/index.ts, bunstart.build.ts, bunstart.watch.ts, scripts, bun install | done | verify |
 
 ## Acceptance criteria
 

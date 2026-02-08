@@ -15,11 +15,12 @@ async function main(): Promise<void> {
     if (eventType !== 'change') return;
     if (timeout) clearTimeout(timeout);
     timeout = setTimeout(async () => {
-      console.log(`Change detected in ${filename ?? watchPath}`);
+      const trigger = filename ? ` (${filename})` : '';
+      console.log(`\nRebuilding${trigger}...`);
       try {
         await build();
-      } catch {
-        // build logs error
+      } catch (e) {
+        console.error('Build failed:', e);
       }
     }, 100);
   });
