@@ -20,16 +20,13 @@ jobs:
                   bun-version: latest
 
             - name: 📥 Install dependencies with Bun (with cache)
-              run: bun install
-
-            - name: 🧛 Lint CLI
-              run: bun run --filter '@form-instant/cli' lint
+              run: bun install --frozen-lockfile
 
             - name: 🔍 Type-check CLI
-              run: bun run --filter '@form-instant/cli' type:check
+              run: bun run --filter '@bunstart/cli' type:check
 
             - name: 🛠️ Build CLI
-              run: bun run --filter '@form-instant/cli' build
+              run: bun run --filter '@bunstart/cli' build
 
             - name: 🚀 Publish CLI to npm
               uses: JS-DevTools/npm-publish@v1

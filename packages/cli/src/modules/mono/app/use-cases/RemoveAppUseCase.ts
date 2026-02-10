@@ -13,8 +13,8 @@ function removeFromDependsOn(
 	repo: RepoSection,
 	removedId: string
 ): {
-	apps: Record<string, { name: string; dependsOn: string[] }>;
-	packages: Record<string, { name: string; dependsOn: string[] }>;
+	newApps: Record<string, { name: string; dependsOn: string[] }>;
+	newPackages: Record<string, { name: string; dependsOn: string[] }>;
 } {
 	const filterDep = (dep: string) => dep !== removedId;
 	const newApps: Record<string, { name: string; dependsOn: string[] }> = {};

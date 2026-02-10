@@ -1,4 +1,4 @@
-import { ProcessPort } from '../../domain/ports/Process.port';
+import type { ProcessPort } from '../../domain/ports/Process.port';
 
 /**
  * Use case for delegating to bun create command.

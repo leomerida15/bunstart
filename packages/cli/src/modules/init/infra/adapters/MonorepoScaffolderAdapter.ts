@@ -87,7 +87,7 @@ export class MonorepoScaffolderAdapter implements MonorepoScaffolderPort {
 		await this.filesystem.deleteFile(join(cwd, 'index.ts'));
 
 		// 3. Scaffold packages/pkg-example
-		const pkgExampleDir = join(cwd, 'packages', config.examplePackageName);
+		const pkgExampleDir = join(cwd, 'packages', config.examplePackageName ?? 'pkg-example');
 		await this.filesystem.ensureDir(join(pkgExampleDir, 'src'));
 
 		const pkgExampleFiles: TemplateFile[] = [
@@ -104,7 +104,7 @@ export class MonorepoScaffolderAdapter implements MonorepoScaffolderPort {
 		}
 
 		// 4. Scaffold apps/app-example
-		const appExampleDir = join(cwd, 'apps', config.exampleAppName);
+		const appExampleDir = join(cwd, 'apps', config.exampleAppName ?? 'app-example');
 		await this.filesystem.ensureDir(join(appExampleDir, 'src'));
 
 		const appExampleFiles: TemplateFile[] = [

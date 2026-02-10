@@ -48,7 +48,9 @@ export function isWorkspaceAlias(
 	repoOrWorkspaces: RepoConfig | ResolvedWorkspace[],
 	alias: string
 ): boolean {
-	return getPackageName(repoOrWorkspaces, alias) !== null;
+	return Array.isArray(repoOrWorkspaces)
+		? getPackageName(repoOrWorkspaces, alias) !== null
+		: getPackageName(repoOrWorkspaces, alias) !== null;
 }
 
 /**

@@ -1,4 +1,4 @@
-import {
+import type {
     ProcessPort,
     ProcessResult
 } from '../../domain/ports/Process.port';
@@ -24,7 +24,7 @@ export class ProcessAdapter implements ProcessPort {
         const exitCode = await process.exitCode;
 
         return {
-            exitCode,
+            exitCode: exitCode ?? -1,
             stdout,
             stderr
         };

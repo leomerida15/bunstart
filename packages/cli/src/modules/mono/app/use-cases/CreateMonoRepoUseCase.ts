@@ -50,6 +50,6 @@ export class CreateMonoRepoUseCase {
         }
 
         // Execute init command inside the new directory
-        await this.initCommand.execute(targetDir);
+        await this.initCommand.execute({ cwd: targetDir });
     }
 }

@@ -92,15 +92,15 @@ export class InitCommand {
 		let projectName = options?.name;
 
 		if (!projectName) {
-			projectName = await this.userInterface.promptProjectName(
+			const name = await this.userInterface.promptProjectName(
 				'Project name:',
 				basename(cwd)
 			);
-		}
-
-		if (!projectName) {
-			console.log('\nOperation cancelled.');
-			return { completed: false };
+			if (!name) {
+				console.log('\nOperation cancelled.');
+				return { completed: false };
+			}
+			projectName = name;
 		}
 
 		// 3. Execute bootstrap based on template type

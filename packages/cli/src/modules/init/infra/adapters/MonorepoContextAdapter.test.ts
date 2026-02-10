@@ -2,16 +2,19 @@ import { describe, it, expect, mock } from 'bun:test';
 import { MonorepoContextAdapter } from './MonorepoContextAdapter';
 import type { FilesystemPort } from '../../domain/ports/Filesystem.port';
 
+type MockableExistsFile = ((path: string) => Promise<boolean>) & {
+    mockImplementation(fn: (path: string) => Promise<boolean>): void;
+};
+
 describe('MonorepoContextAdapter', () => {
-    const mockFilesystem = {
-        existsFile: mock<() => Promise<boolean>>(),
-        readFile: mock<() => Promise<string>>(),
-        writeFile: mock<() => Promise<void>>(),
-        createDirectory: mock<() => Promise<void>>(),
-        existsDirectory: mock<() => Promise<boolean>>(),
-        copy: mock<() => Promise<void>>(),
-        getTemplatePath: mock<() => string>()
-    } as unknown as FilesystemPort;
+    const mockFilesystem: FilesystemPort & { existsFile: MockableExistsFile } = {
+        existsFile: mock(() => Promise.resolve(false)) as MockableExistsFile,
+        ensureDir: mock(() => Promise.resolve()),
+        writeFile: mock(() => Promise.resolve()),
+        deleteFile: mock(() => Promise.resolve()),
+        existsDir: mock(() => Promise.resolve(false)),
+        copyDirectory: mock(() => Promise.resolve())
+    };
 
     const adapter = new MonorepoContextAdapter(mockFilesystem);
 

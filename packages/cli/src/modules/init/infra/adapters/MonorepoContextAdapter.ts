@@ -1,8 +1,8 @@
-import {
+import type {
     MonorepoContextPort,
     MonorepoContextResult
 } from '../../domain/ports/MonorepoContext.port';
-import { FilesystemPort } from '../../domain/ports/Filesystem.port';
+import type { FilesystemPort } from '../../domain/ports/Filesystem.port';
 
 /**
  * Adapter for detecting monorepo context.
