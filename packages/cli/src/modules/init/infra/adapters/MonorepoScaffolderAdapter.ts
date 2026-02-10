@@ -87,7 +87,7 @@ export class MonorepoScaffolderAdapter implements MonorepoScaffolderPort {
 		await this.filesystem.deleteFile(join(cwd, 'index.ts'));
 
 		// 3. Scaffold packages/pkg-example
-		const pkgExampleDir = join(cwd, 'packages', config.examplePackageName);
+		const pkgExampleDir = join(cwd, 'packages', config.examplePackageName ?? 'pkg-example');
 		await this.filesystem.ensureDir(join(pkgExampleDir, 'src'));
 
 		const pkgExampleFiles: TemplateFile[] = [
@@ -104,7 +104,7 @@ export class MonorepoScaffolderAdapter implements MonorepoScaffolderPort {
 		}
 
 		// 4. Scaffold apps/app-example
-		const appExampleDir = join(cwd, 'apps', config.exampleAppName);
+		const appExampleDir = join(cwd, 'apps', config.exampleAppName ?? 'app-example');
 		await this.filesystem.ensureDir(join(appExampleDir, 'src'));
 
 		const appExampleFiles: TemplateFile[] = [
@@ -112,6 +112,7 @@ export class MonorepoScaffolderAdapter implements MonorepoScaffolderPort {
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/src-index.ts.template'), target: join(appExampleDir, 'src', 'index.ts') },
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/bunstart.build.ts.template'), target: join(appExampleDir, 'bunstart.build.ts') },
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/bunstart.watch.ts.template'), target: join(appExampleDir, 'bunstart.watch.ts') },
+			{ source: join(TEMPLATES_BASE, 'apps/app-example/bunstart.start.ts.template'), target: join(appExampleDir, 'bunstart.start.ts') },
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/tsconfig.json.template'), target: join(appExampleDir, 'tsconfig.json') }
 		];
 
@@ -130,6 +131,7 @@ export class MonorepoScaffolderAdapter implements MonorepoScaffolderPort {
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/src-index.ts.template'), target: join(appDir, 'src', 'index.ts') },
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/bunstart.build.ts.template'), target: join(appDir, 'bunstart.build.ts') },
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/bunstart.watch.ts.template'), target: join(appDir, 'bunstart.watch.ts') },
+			{ source: join(TEMPLATES_BASE, 'apps/app-example/bunstart.start.ts.template'), target: join(appDir, 'bunstart.start.ts') },
 			{ source: join(TEMPLATES_BASE, 'apps/app-example/tsconfig.json.template'), target: join(appDir, 'tsconfig.json') }
 		];
 

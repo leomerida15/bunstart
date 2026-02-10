@@ -1,7 +1,8 @@
+console.log('--- CLI START ---');
 import { InitCommandFactory } from './modules/init/infra/factories/InitCommandFactory';
+import { CreateCommandFactory } from './modules/init/infra/factories/CreateCommandFactory';
 import { MonoCommandFactory } from './modules/mono/infra/factories/MonoCommandFactory';
-import { RepoStateUseCasesFactory } from './modules/repo-state/infra/factories/RepoStateUseCasesFactory';
-import { isWorkspaceAlias } from './modules/repo-state/domain/entities/RepoState';
+import { isNativeBunCommand } from './modules/mono/domain/services/NativeBunCommands';
 
 /**
  * Displays the help message for the CLI.
@@ -17,6 +18,8 @@ Usage:
 Commands:
   init                    Initialize a new project with a template
                           Templates: monorepo, api-rest, frontend-react, library
+
+  create                  Create a new project (init or bun create wrapper)
 
   mono <subcommand>       Manage monorepo packages and apps
     generate app <name>   Generate and register a new app (alias: gen)
@@ -100,6 +103,20 @@ async function main(): Promise<void> {
 				await handleInitCommand();
 				break;
 
+			case 'create': {
+				if (commandArgs.includes('--help') || commandArgs.includes('-h')) {
+					const { CreateCommand } = await import(
+						'./modules/init/app/CreateCommand'
+					);
+					console.log(CreateCommand.getHelp());
+					return;
+				}
+				const createFactory = new CreateCommandFactory();
+				const createCommand = createFactory.create();
+				await createCommand.execute(commandArgs, process.cwd());
+				break;
+			}
+
 			case 'mono':
 				await handleMonoCommand(commandArgs);
 				break;
@@ -109,28 +126,46 @@ async function main(): Promise<void> {
 					console.error('Error: No command provided.');
 					process.exit(1);
 				}
-				// Try run: buns <alias> [...commands] when in a monorepo with bunstart.config
-				const loadRepoState = RepoStateUseCasesFactory.createLoadRepoStateUseCase();
-				const state = await loadRepoState.execute(process.cwd());
-				if (state && isWorkspaceAlias(state, command)) {
+				// Try run: buns <alias> [...commands] when in a monorepo with package.json workspaces
+				const resolveWorkspaces =
+					MonoCommandFactory.createResolveWorkspacesAdapter();
+				const workspaces = await resolveWorkspaces.resolve(process.cwd());
+				const isAlias = workspaces.some((w) => w.id === command);
+				if (isAlias) {
 					const cwd = process.cwd();
-					// Ensure dependencies are built before build/dev
+					// Ensure dependencies are built before build/dev/start
 					const isBuildOrDev =
 						commandArgs[0] === 'build' ||
 						commandArgs[0] === 'dev' ||
+						commandArgs[0] === 'start' ||
 						(commandArgs[0] === 'run' &&
-							(commandArgs[1] === 'build' || commandArgs[1] === 'dev'));
+							(commandArgs[1] === 'build' ||
+								commandArgs[1] === 'dev' ||
+								commandArgs[1] === 'start'));
 					if (isBuildOrDev) {
+						const ensureConfigSynced =
+							MonoCommandFactory.createEnsureConfigSyncedUseCase();
+						await ensureConfigSynced.execute(cwd);
 						const ensureDepsBuilt =
-							RepoStateUseCasesFactory.createEnsureDepsBuiltUseCase();
+							MonoCommandFactory.createEnsureDepsBuiltUseCase();
 						await ensureDepsBuilt.execute(cwd, command);
 					}
-					const runInWorkspace = RepoStateUseCasesFactory.createRunInWorkspaceUseCase();
-					// Pass through; if user said "buns app-example build", we need "run build"
-					const runArgs =
-						commandArgs.length > 0 && commandArgs[0] !== 'run'
-							? ['run', ...commandArgs]
-							: commandArgs;
+					const runInWorkspace = MonoCommandFactory.createRunInWorkspaceUseCase();
+					// Native bun commands: no "run" prefix. Scripts: prepend "run"
+					let runArgs: string[];
+					if (
+						commandArgs.length > 0 &&
+						isNativeBunCommand(commandArgs[0] as string)
+					) {
+						runArgs = commandArgs;
+					} else if (
+						commandArgs.length > 0 &&
+						commandArgs[0] !== 'run'
+					) {
+						runArgs = ['run', ...commandArgs];
+					} else {
+						runArgs = commandArgs;
+					}
 					await runInWorkspace.execute(cwd, command, runArgs);
 				} else {
 					console.error(`Error: Unknown command "${command}".`);

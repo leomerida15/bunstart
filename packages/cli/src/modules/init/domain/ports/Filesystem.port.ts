@@ -28,4 +28,30 @@ export interface FilesystemPort {
 	 * @returns {Promise<void>}
 	 */
 	deleteFile(path: string): Promise<void>;
+
+	/**
+	 * Returns true if the path exists and is a directory.
+	 *
+	 * @param {string} path - Directory path
+	 * @returns {Promise<boolean>}
+	 */
+	existsDir(path: string): Promise<boolean>;
+
+	/**
+	 * Returns true if the path exists and is a file.
+	 *
+	 * @param {string} path - File path
+	 * @returns {Promise<boolean>}
+	 */
+	existsFile(path: string): Promise<boolean>;
+
+	/**
+	 * Copies a directory recursively from source to destination.
+	 * Caller must ensure destination does not exist if overwrite is not desired.
+	 *
+	 * @param {string} sourcePath - Source directory path
+	 * @param {string} destPath - Destination directory path
+	 * @returns {Promise<void>}
+	 */
+	copyDirectory(sourcePath: string, destPath: string): Promise<void>;
 }

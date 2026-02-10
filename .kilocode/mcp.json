@@ -1,0 +1,1 @@
+{"mcpServers":{"context7":{"command":"bunx -b","args":["-y","@upstash/context7-mcp"],"env":{"DEFAULT_MINIMUM_TOKENS":"ctx7sk-d47eacb8-4599-47b3-b1f6-90aa5fed21f2"},"disabled":true,"alwaysAllow":["query-docs"]},"supabase":{"command":"npx","args":["-y","@supabase/mcp-server-supabase@0.5.5","--access-token","sbp_a2ba542aca5859350891b52cfeb590c4516f6bb9"]}}}

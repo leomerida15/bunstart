@@ -20,6 +20,36 @@ export class BunRuntimeAdapter implements BunRuntimePort {
 		}
 	}
 
+	public async initReact(
+		cwd: string,
+		variant: 'react' | 'tailwind' | 'shadcn'
+	): Promise<void> {
+		const flag =
+			variant === 'react'
+				? '--react'
+				: `--react=${variant}`;
+		const proc = Bun.spawn(['bun', 'init', flag, '-y'], {
+			cwd,
+			stdout: 'inherit',
+			stderr: 'inherit'
+		});
+
+		const exitCode = await proc.exited;
+		if (exitCode !== 0) {
+			throw new Error(
+				`bun init ${flag} failed with exit code ${exitCode}`
+			);
+		}
+	}
+
+	/**
+	 * Library template: Bun does not document a --library flag; use blank init.
+	 * If Bun adds e.g. `bun init --library -y`, switch to that spawn here.
+	 */
+	public async initLibrary(cwd: string): Promise<void> {
+		await this.initBlank(cwd);
+	}
+
 	public async installDependencies(cwd: string): Promise<void> {
 		const proc = Bun.spawn(['bun', 'install'], {
 			cwd,

@@ -2,16 +2,17 @@
  * Build script: compiles TypeScript and emits declaration files.
  */
 export async function build(): Promise<void> {
+  console.log('Building...');
   await Bun.build({
     entrypoints: ['src/index.ts'],
     outdir: 'dist',
     target: 'bun',
     format: 'esm',
     minify: false,
-    sourcemap: true
+    sourcemap: false
   });
 
-  const proc = Bun.spawn(['bun', 'x', 'tsc', '--emitDeclarationOnly', '--declaration', '--outDir', 'dist'], {
+  const proc = Bun.spawn(['bun', 'run', 'tsc', '--emitDeclarationOnly', '--declaration', '--outDir', 'dist'], {
     cwd: process.cwd(),
     stdout: 'inherit',
     stderr: 'inherit'

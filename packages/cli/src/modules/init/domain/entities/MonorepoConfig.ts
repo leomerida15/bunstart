@@ -2,6 +2,8 @@ import { MonorepoAlias } from '../value-objects/MonorepoAlias';
 
 export interface MonorepoConfigProps {
 	alias: MonorepoAlias;
+	examplePackageName?: string;
+	exampleAppName?: string;
 }
 
 /**

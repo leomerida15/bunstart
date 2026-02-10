@@ -1,5 +1,5 @@
-import { mkdirSync, existsSync, unlinkSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { mkdirSync, existsSync, unlinkSync, statSync, cpSync } from 'node:fs';
+import { dirname } from 'node:path';
 import type { FilesystemPort } from '../../domain/ports/Filesystem.port';
 
 /**
@@ -24,5 +24,25 @@ export class NodeFilesystemAdapter implements FilesystemPort {
 		if (existsSync(path)) {
 			unlinkSync(path);
 		}
+	}
+
+	public async existsDir(path: string): Promise<boolean> {
+		if (!existsSync(path)) return false;
+		return statSync(path).isDirectory();
+	}
+
+	public async copyDirectory(sourcePath: string, destPath: string): Promise<void> {
+		cpSync(sourcePath, destPath, { recursive: true });
+	}
+
+	/**
+	 * Checks if a file exists at the given path.
+	 *
+	 * @param {string} path - Path to check
+	 * @returns {Promise<boolean>} True if file exists
+	 */
+	public async existsFile(path: string): Promise<boolean> {
+		if (!existsSync(path)) return false;
+		return statSync(path).isFile();
 	}
 }
