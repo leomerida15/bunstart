@@ -2,7 +2,8 @@ import Enquirer from 'enquirer';
 import { Template } from '../../domain/entities/Template';
 import type {
 	SelectionResult,
-	UserInterfacePort
+	UserInterfacePort,
+	BuildScriptsConfirmation
 } from '../../domain/ports/UserInterface.port';
 
 /**
@@ -206,6 +207,37 @@ export class EnquirerAdapter implements UserInterfacePort {
 			}
 			throw new Error(
 				`Failed to prompt for React variant: ${error instanceof Error ? error.message : String(error)}`
+			);
+		}
+	}
+
+	/**
+	 * Prompts the user to confirm if they want to generate bunstart.build.ts
+	 * and bunstart.watch.ts scripts.
+	 *
+	 * @param {string} [message='Generate bunstart.build.ts and bunstart.watch.ts scripts?'] - The prompt message
+	 * @returns {Promise<BuildScriptsConfirmation>} The user's choice
+	 */
+	public async confirmGenerateBuildScripts(
+		message: string = 'Generate bunstart.build.ts and bunstart.watch.ts scripts?'
+	): Promise<BuildScriptsConfirmation> {
+		try {
+			const response = await Enquirer.prompt<{ generate: boolean }>({
+				type: 'confirm',
+				name: 'generate',
+				message,
+				initial: true
+			});
+			return { shouldGenerate: response.generate };
+		} catch (error) {
+			if (error && typeof error === 'object' && 'name' in error) {
+				const err = error as { name?: string };
+				if (err.name === 'Error' || err.name === 'CancelledPromptError') {
+					return { shouldGenerate: false };
+				}
+			}
+			throw new Error(
+				`Failed to prompt for build scripts confirmation: ${error instanceof Error ? error.message : String(error)}`
 			);
 		}
 	}

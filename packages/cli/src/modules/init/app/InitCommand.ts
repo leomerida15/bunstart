@@ -15,11 +15,21 @@ export interface InitCommandProps {
 	bootstrapLibraryUseCase: BootstrapLibraryUseCase;
 }
 
+export interface InitCommandOptions {
+	name?: string;
+	template?: string;
+	cwd?: string;
+}
+
+export interface InitCommandResult {
+	completed: boolean;
+}
+
 /**
  * Command for initializing a new project.
  *
  * This command orchestrates the project initialization workflow by:
- * 1. Prompting the user to select a project template
+ * 1. Prompting the user to select a project template (or using provided option)
  * 2. Processing the selected template (scaffolding)
  *
  * Following the Dependency Inversion Principle, this command depends on
@@ -51,49 +61,71 @@ export class InitCommand {
 		this.bootstrapLibraryUseCase = bootstrapLibraryUseCase;
 	}
 
-	public async execute(targetDir?: string): Promise<void> {
+	public async execute(options?: InitCommandOptions): Promise<InitCommandResult> {
 		console.log('\n🚀 Initializing new project...\n');
 
-		const selectedTemplate = await this.selectTemplateUseCase.execute();
+		// 1. Determine template
+		let selectedTemplate;
+		if (options?.template) {
+			// Mock a template object based on the string
+			// In a real scenario, we might want to validate this against available templates
+			// For now, we assume valid input from internal calls
+			selectedTemplate = {
+				name: options.template,
+				type: { value: options.template, label: options.template },
+				description: '',
+				color: '#000000'
+			};
+		} else {
+			selectedTemplate = await this.selectTemplateUseCase.execute();
+		}
 
 		if (!selectedTemplate) {
 			console.log('\nOperation cancelled.');
-			return;
+			return { completed: false };
 		}
 
 		console.log(`\nSelected template: ${selectedTemplate.name}`);
 
-		const cwd = targetDir ? targetDir : process.cwd();
-		const projectName = await this.userInterface.promptProjectName(
-			'Project name:',
-			basename(cwd)
-		);
-		if (projectName === null) {
-			console.log('\nOperation cancelled.');
-			return;
+		// 2. Determine target directory and project name
+		const cwd = options?.cwd ? options.cwd : process.cwd();
+		let projectName = options?.name;
+
+		if (!projectName) {
+			projectName = await this.userInterface.promptProjectName(
+				'Project name:',
+				basename(cwd)
+			);
 		}
 
+		if (!projectName) {
+			console.log('\nOperation cancelled.');
+			return { completed: false };
+		}
+
+		// 3. Execute bootstrap based on template type
 		if (selectedTemplate.type.value === 'monorepo') {
 			await this.bootstrapMonorepoUseCase.execute(cwd, { projectName });
-			return;
+			return { completed: true };
 		}
 
 		if (selectedTemplate.type.value === 'api-rest') {
 			await this.bootstrapApiRestUseCase.execute(cwd, projectName);
-			return;
+			return { completed: true };
 		}
 
 		if (selectedTemplate.type.value === 'frontend-react') {
 			await this.bootstrapFrontendReactUseCase.execute(cwd, projectName);
-			return;
+			return { completed: true };
 		}
 
 		if (selectedTemplate.type.value === 'library') {
 			await this.bootstrapLibraryUseCase.execute(cwd, projectName);
-			return;
+			return { completed: true };
 		}
 
 		console.log('Configuring project...');
 		// Other template types: future implementation
+		return { completed: true };
 	}
 }

@@ -19,6 +19,7 @@ export interface ApplyBunstartRulesPort {
 		options?: {
 			entryExt?: 'ts' | 'tsx';
 			projectName?: string;
+			projectType?: 'backend' | 'frontend';
 			startCommand?: string;
 		}
 	): Promise<void>;

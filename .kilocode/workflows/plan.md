@@ -1,0 +1,1 @@
+quiero un plan de accion sobre el archivo referenciado, debe plantearme tus dudas y estructurarlo de manera legible, el codigo debe cumplir con la regla code.mdc

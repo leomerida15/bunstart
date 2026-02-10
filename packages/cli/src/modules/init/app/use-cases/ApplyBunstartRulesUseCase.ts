@@ -21,7 +21,12 @@ export class ApplyBunstartRulesUseCase {
 
 	public async execute(
 		cwd: string,
-		options?: { entryExt?: 'ts' | 'tsx' }
+		options?: {
+			entryExt?: 'ts' | 'tsx';
+			projectName?: string;
+			projectType?: 'backend' | 'frontend';
+			startCommand?: string;
+		}
 	): Promise<void> {
 		await this.applyBunstartRules.execute(cwd, options);
 	}

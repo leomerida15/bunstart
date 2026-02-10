@@ -17,6 +17,13 @@ import type { RunBunInstallPort } from '../domain/ports/RunBunInstall.port';
 import type { AdoptProjectUseCase } from './use-cases/AdoptProjectUseCase';
 import type { CreateMonoRepoUseCase } from './use-cases/CreateMonoRepoUseCase';
 import type { MigrateMonoRepoUseCase } from './use-cases/MigrateMonoRepoUseCase';
+import type { SelectTemplateUseCase } from '../../init/app/use-cases/SelectTemplateUseCase';
+import type { BootstrapApiRestUseCase } from '../../init/app/use-cases/BootstrapApiRestUseCase';
+import type { BootstrapFrontendReactUseCase } from '../../init/app/use-cases/BootstrapFrontendReactUseCase';
+import type { BootstrapLibraryUseCase } from '../../init/app/use-cases/BootstrapLibraryUseCase';
+import type { PackageJsonPort } from '../../init/domain/ports/PackageJson.port';
+import type { FilesystemPort } from '../../init/domain/ports/Filesystem.port';
+import { join } from 'node:path';
 
 export interface MonoCommandProps {
 	loadConfig: LoadConfigUseCase;
@@ -36,6 +43,12 @@ export interface MonoCommandProps {
 	scaffolder: MonorepoScaffolderPort;
 	createMonoRepo: CreateMonoRepoUseCase;
 	migrateMonoRepo: MigrateMonoRepoUseCase;
+	selectTemplateUseCase: SelectTemplateUseCase;
+	bootstrapApiRestUseCase: BootstrapApiRestUseCase;
+	bootstrapFrontendReactUseCase: BootstrapFrontendReactUseCase;
+	bootstrapLibraryUseCase: BootstrapLibraryUseCase;
+	packageJson: PackageJsonPort;
+	filesystem: FilesystemPort;
 }
 
 /**
@@ -63,6 +76,12 @@ export class MonoCommand {
 	private readonly scaffolder: MonorepoScaffolderPort;
 	private readonly createMonoRepo: CreateMonoRepoUseCase;
 	private readonly migrateMonoRepo: MigrateMonoRepoUseCase;
+	private readonly selectTemplateUseCase: SelectTemplateUseCase;
+	private readonly bootstrapApiRestUseCase: BootstrapApiRestUseCase;
+	private readonly bootstrapFrontendReactUseCase: BootstrapFrontendReactUseCase;
+	private readonly bootstrapLibraryUseCase: BootstrapLibraryUseCase;
+	private readonly packageJson: PackageJsonPort;
+	private readonly filesystem: FilesystemPort;
 
 	constructor({
 		loadConfig,
@@ -81,7 +100,13 @@ export class MonoCommand {
 		adoptProject,
 		scaffolder,
 		createMonoRepo,
-		migrateMonoRepo
+		migrateMonoRepo,
+		selectTemplateUseCase,
+		bootstrapApiRestUseCase,
+		bootstrapFrontendReactUseCase,
+		bootstrapLibraryUseCase,
+		packageJson,
+		filesystem
 	}: MonoCommandProps) {
 		this.loadConfig = loadConfig;
 		this.resolveWorkspaces = resolveWorkspaces;
@@ -100,6 +125,12 @@ export class MonoCommand {
 		this.scaffolder = scaffolder;
 		this.createMonoRepo = createMonoRepo;
 		this.migrateMonoRepo = migrateMonoRepo;
+		this.selectTemplateUseCase = selectTemplateUseCase;
+		this.bootstrapApiRestUseCase = bootstrapApiRestUseCase;
+		this.bootstrapFrontendReactUseCase = bootstrapFrontendReactUseCase;
+		this.bootstrapLibraryUseCase = bootstrapLibraryUseCase;
+		this.packageJson = packageJson;
+		this.filesystem = filesystem;
 	}
 
 	async execute(args: string[]): Promise<void> {
@@ -243,6 +274,11 @@ export class MonoCommand {
 	private async handleGenerate(args: string[]): Promise<void> {
 		const typeArg = args[0];
 		const name = args[1];
+		// Flag to pre-select template (optional)
+		// buns mono generate app my-app --template api-rest
+		const templateFlagIdx = args.indexOf('--template');
+		const templateFlagValue = templateFlagIdx !== -1 ? args[templateFlagIdx + 1] : undefined;
+
 		if (!typeArg || (typeArg !== 'app' && typeArg !== 'pkg')) {
 			console.error(
 				'Usage: buns mono generate app <name> | buns mono generate pkg <name> (alias: gen)'
@@ -270,19 +306,72 @@ export class MonoCommand {
 		}
 
 		const packageName = `@${scope}/${name}`;
+		const targetDir = join(cwd, typeArg === 'app' ? 'apps' : 'packages', name);
+
+		// Determine template
+		let templateType = templateFlagValue;
+
+		if (!templateType) {
+			// If not specified, ask.
+			// Ideally we want to filter templates based on type (app vs pkg)
+			// For now, we show all compatible templates.
+			const template = await this.selectTemplateUseCase.execute(`Select template for ${name}:`);
+			if (!template) {
+				console.log('Operation cancelled.');
+				return;
+			}
+			templateType = template.type.value;
+		}
+
+		if (templateType === 'monorepo') {
+			console.log('Cannot nest a monorepo inside a monorepo. Please choose another template.');
+			process.exit(1);
+		}
 
 		try {
+			await this.filesystem.ensureDir(targetDir);
+
+			if (templateType === 'api-rest') {
+				await this.bootstrapApiRestUseCase.execute(targetDir, packageName);
+			} else if (templateType === 'frontend-react') {
+				await this.bootstrapFrontendReactUseCase.execute(targetDir, packageName);
+			} else if (templateType === 'library') {
+				await this.bootstrapLibraryUseCase.execute(targetDir, packageName);
+			} else {
+				// Fallback to old behavior if somehow we get here, or maybe 'basic'
+				// But currently scaffoldApp/Package creates specific 'example' templates.
+				// Let's assume if the user wanted the basic one they might have selected something else or we treat 'default' as scaffoldApp
+
+				// Actually, let's treat unknown templates by falling back to basic scaffolding if it matches 'basic' (custom) or if logic demands
+				// But since we are selecting from a list, let's assume we covered the main ones.
+				// If user manually typed --template something-else:
+				console.log(`Template '${templateType}' not explicitly handled, falling back to basic scaffold...`);
+				if (typeArg === 'app') {
+					await this.scaffolder.scaffoldApp(cwd, name, scope);
+				} else {
+					await this.scaffolder.scaffoldPackage(cwd, name, scope);
+				}
+				// Basic scaffold handles package registration internally? No, addApp/addPackage call it.
+				// Wait, the original code did:
+				// await this.addApp.execute(cwd, name, packageName, []);
+				// await this.scaffolder.scaffoldApp(cwd, name, scope);
+				// await this.runBunInstall.execute(cwd);
+
+				// So if we use basic scaffold, we must register it.
+				// If we use bootstrap use cases, we ALSO must register it.
+			}
+
+
+			// Register in config
 			if (typeArg === 'app') {
 				await this.addApp.execute(cwd, name, packageName, []);
-				await this.scaffolder.scaffoldApp(cwd, name, scope);
-				await this.runBunInstall.execute(cwd);
-				console.log(`\n✅ App "${name}" generated and registered.`);
 			} else {
 				await this.addPackage.execute(cwd, name, packageName, []);
-				await this.scaffolder.scaffoldPackage(cwd, name, scope);
-				await this.runBunInstall.execute(cwd);
-				console.log(`\n✅ Package "${name}" generated and registered.`);
 			}
+
+			await this.runBunInstall.execute(cwd);
+			console.log(`\n✅ ${typeArg === 'app' ? 'App' : 'Package'} "${name}" generated and registered.`);
+
 		} catch (err) {
 			console.error(err instanceof Error ? err.message : String(err));
 			process.exit(1);

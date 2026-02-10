@@ -1,4 +1,6 @@
+console.log('--- CLI START ---');
 import { InitCommandFactory } from './modules/init/infra/factories/InitCommandFactory';
+import { CreateCommandFactory } from './modules/init/infra/factories/CreateCommandFactory';
 import { MonoCommandFactory } from './modules/mono/infra/factories/MonoCommandFactory';
 import { isNativeBunCommand } from './modules/mono/domain/services/NativeBunCommands';
 
@@ -16,6 +18,8 @@ Usage:
 Commands:
   init                    Initialize a new project with a template
                           Templates: monorepo, api-rest, frontend-react, library
+
+  create                  Create a new project (init or bun create wrapper)
 
   mono <subcommand>       Manage monorepo packages and apps
     generate app <name>   Generate and register a new app (alias: gen)
@@ -99,6 +103,20 @@ async function main(): Promise<void> {
 				await handleInitCommand();
 				break;
 
+			case 'create': {
+				if (commandArgs.includes('--help') || commandArgs.includes('-h')) {
+					const { CreateCommand } = await import(
+						'./modules/init/app/CreateCommand'
+					);
+					console.log(CreateCommand.getHelp());
+					return;
+				}
+				const createFactory = new CreateCommandFactory();
+				const createCommand = createFactory.create();
+				await createCommand.execute(commandArgs, process.cwd());
+				break;
+			}
+
 			case 'mono':
 				await handleMonoCommand(commandArgs);
 				break;
@@ -137,7 +155,7 @@ async function main(): Promise<void> {
 					let runArgs: string[];
 					if (
 						commandArgs.length > 0 &&
-						isNativeBunCommand(commandArgs[0])
+						isNativeBunCommand(commandArgs[0] as string)
 					) {
 						runArgs = commandArgs;
 					} else if (

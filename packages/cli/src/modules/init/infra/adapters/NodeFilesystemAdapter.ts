@@ -34,4 +34,15 @@ export class NodeFilesystemAdapter implements FilesystemPort {
 	public async copyDirectory(sourcePath: string, destPath: string): Promise<void> {
 		cpSync(sourcePath, destPath, { recursive: true });
 	}
+
+	/**
+	 * Checks if a file exists at the given path.
+	 *
+	 * @param {string} path - Path to check
+	 * @returns {Promise<boolean>} True if file exists
+	 */
+	public async existsFile(path: string): Promise<boolean> {
+		if (!existsSync(path)) return false;
+		return statSync(path).isFile();
+	}
 }

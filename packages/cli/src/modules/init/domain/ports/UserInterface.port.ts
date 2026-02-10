@@ -1,6 +1,16 @@
 import { Template } from '../entities/Template';
 
 /**
+ * Result of confirming build scripts generation.
+ *
+ * @interface BuildScriptsConfirmation
+ */
+export interface BuildScriptsConfirmation {
+	/** Whether to generate bunstart.build.ts and bunstart.watch.ts */
+	shouldGenerate: boolean;
+}
+
+/**
  * Result of a user selection prompt.
  *
  * @interface SelectionResult
@@ -66,4 +76,15 @@ export interface UserInterfacePort {
 	selectReactVariant(
 		message?: string
 	): Promise<'react' | 'tailwind' | 'shadcn' | null>;
+
+	/**
+	 * Prompts the user to confirm if they want to generate bunstart.build.ts
+	 * and bunstart.watch.ts scripts.
+	 *
+	 * @param {string} [message] - The prompt message to display
+	 * @returns {Promise<BuildScriptsConfirmation>} The user's choice
+	 */
+	confirmGenerateBuildScripts(
+		message?: string
+	): Promise<BuildScriptsConfirmation>;
 }

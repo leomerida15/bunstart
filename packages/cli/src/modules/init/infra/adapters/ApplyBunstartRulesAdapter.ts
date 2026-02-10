@@ -47,6 +47,7 @@ export class ApplyBunstartRulesAdapter implements ApplyBunstartRulesPort {
 		options?: {
 			entryExt?: 'ts' | 'tsx';
 			projectName?: string;
+			projectType?: 'backend' | 'frontend';
 			startCommand?: string;
 		}
 	): Promise<void> {
@@ -81,26 +82,46 @@ export class ApplyBunstartRulesAdapter implements ApplyBunstartRulesPort {
 	private async writeTemplates(
 		cwd: string,
 		entryPoint: string,
-		options?: { startCommand?: string }
+		options?: { projectType?: 'backend' | 'frontend'; startCommand?: string }
 	): Promise<void> {
-		const buildSource = join(TEMPLATES_BASE, 'bunstart.build.ts.template');
 		const watchSource = join(TEMPLATES_BASE, 'bunstart.watch.ts.template');
 		const startSource = join(TEMPLATES_BASE, 'bunstart.start.ts.template');
 
-		const buildContent = (await Bun.file(buildSource).text()).replace(
-			/\{\{ENTRYPOINT\}\}/g,
-			entryPoint
-		);
-		await this.filesystem.writeFile(
-			join(cwd, 'bunstart.build.ts'),
-			buildContent
-		);
-
-		const watchContent = await Bun.file(watchSource).text();
-		await this.filesystem.writeFile(
-			join(cwd, 'bunstart.watch.ts'),
-			watchContent
-		);
+		if (options?.projectType === 'frontend') {
+			const buildSource = join(
+				TEMPLATES_BASE,
+				'bunstart.build.frontend.ts.template'
+			);
+			const buildContent = await Bun.file(buildSource).text();
+			await this.filesystem.writeFile(
+				join(cwd, 'bunstart.build.ts'),
+				buildContent
+			);
+			const watchSource = join(
+				TEMPLATES_BASE,
+				'bunstart.watch.frontend.ts.template'
+			);
+			const watchContent = await Bun.file(watchSource).text();
+			await this.filesystem.writeFile(
+				join(cwd, 'bunstart.watch.ts'),
+				watchContent
+			);
+		} else {
+			const buildSource = join(TEMPLATES_BASE, 'bunstart.build.ts.template');
+			const buildContent = (await Bun.file(buildSource).text()).replace(
+				/\{\{ENTRYPOINT\}\}/g,
+				entryPoint
+			);
+			await this.filesystem.writeFile(
+				join(cwd, 'bunstart.build.ts'),
+				buildContent
+			);
+			const watchContent = await Bun.file(watchSource).text();
+			await this.filesystem.writeFile(
+				join(cwd, 'bunstart.watch.ts'),
+				watchContent
+			);
+		}
 
 		if (options?.startCommand === undefined) {
 			const startContent = await Bun.file(startSource).text();
@@ -113,11 +134,15 @@ export class ApplyBunstartRulesAdapter implements ApplyBunstartRulesPort {
 
 	private async patchPackageJson(
 		cwd: string,
-		options?: { projectName?: string; startCommand?: string }
+		options?: {
+			projectName?: string;
+			projectType?: 'backend' | 'frontend';
+			startCommand?: string;
+		}
 	): Promise<void> {
 		const pkgPath = join(cwd, 'package.json');
 		const startScript =
-			options?.startCommand ?? 'bun run -b bunstart.start.ts';
+			options?.startCommand ?? 'bun src/index.ts';
 		const patch: Record<string, unknown> = {
 			scripts: {
 				build: 'bun run -b bunstart.build.ts',
@@ -132,6 +157,19 @@ export class ApplyBunstartRulesAdapter implements ApplyBunstartRulesPort {
 		if (options?.projectName !== undefined) {
 			patch.name = options.projectName;
 			patch.version = '0.0.1';
+		}
+		if (options?.projectType === 'frontend') {
+			const current = await this.packageJson.read(pkgPath);
+			const existingDevDeps = (current.devDependencies as Record<string, string>) ?? {};
+			const existingDeps = (current.dependencies as Record<string, string>) ?? {};
+			const hasTailwindPlugin =
+				'bun-plugin-tailwind' in existingDeps || 'bun-plugin-tailwind' in existingDevDeps;
+			if (!hasTailwindPlugin) {
+				patch.devDependencies = {
+					...existingDevDeps,
+					'bun-plugin-tailwind': '^0.1.0'
+				};
+			}
 		}
 		await this.packageJson.patch(pkgPath, patch);
 	}

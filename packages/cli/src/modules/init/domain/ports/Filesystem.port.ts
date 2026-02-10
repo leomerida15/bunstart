@@ -38,6 +38,14 @@ export interface FilesystemPort {
 	existsDir(path: string): Promise<boolean>;
 
 	/**
+	 * Returns true if the path exists and is a file.
+	 *
+	 * @param {string} path - File path
+	 * @returns {Promise<boolean>}
+	 */
+	existsFile(path: string): Promise<boolean>;
+
+	/**
 	 * Copies a directory recursively from source to destination.
 	 * Caller must ensure destination does not exist if overwrite is not desired.
 	 *

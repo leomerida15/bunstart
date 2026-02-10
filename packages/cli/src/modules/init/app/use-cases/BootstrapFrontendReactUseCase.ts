@@ -53,7 +53,8 @@ export class BootstrapFrontendReactUseCase {
 		await this.applyBunstartRules.execute(cwd, {
 			entryExt: 'ts',
 			projectName,
-			startCommand: 'cd dist && bun run -b index.js'
+			projectType: 'frontend',
+			startCommand: 'bun run -b src/index.ts'
 		});
 
 		console.log('\nInstalling dependencies...');

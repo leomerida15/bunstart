@@ -104,6 +104,11 @@ export class MonoCommandFactory {
 			initializeConfig
 		});
 
+		const selectTemplateUseCase = InitCommandFactory.createSelectTemplateUseCase();
+		const bootstrapApiRestUseCase = InitCommandFactory.createBootstrapApiRestUseCase();
+		const bootstrapFrontendReactUseCase = InitCommandFactory.createBootstrapFrontendReactUseCase();
+		const bootstrapLibraryUseCase = InitCommandFactory.createBootstrapLibraryUseCase();
+
 		return new MonoCommand({
 			loadConfig: this.loadConfig,
 			resolveWorkspaces: this.resolveWorkspacesAdapter,
@@ -127,7 +132,13 @@ export class MonoCommandFactory {
 			adoptProject,
 			scaffolder,
 			createMonoRepo,
-			migrateMonoRepo
+			migrateMonoRepo,
+			selectTemplateUseCase,
+			bootstrapApiRestUseCase,
+			bootstrapFrontendReactUseCase,
+			bootstrapLibraryUseCase,
+			packageJson: packageJsonAdapter,
+			filesystem
 		});
 	}
 

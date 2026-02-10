@@ -51,6 +51,7 @@ export class AdoptProjectUseCase {
 		type: 'app' | 'pkg',
 		name: string,
 		sourcePath?: string,
+		options?: { skipBuild?: boolean }
 	): Promise<void> {
 		console.log('[AdoptProject] Starting adoption...');
 		const trimmedName = name?.trim();
@@ -110,8 +111,12 @@ export class AdoptProjectUseCase {
 			await this.addPackage.execute(cwd, trimmedName, packageName, []);
 		}
 
-		console.log('[AdoptProject] Running bun install...');
-		await this.runBunInstall.execute(cwd);
+		if (!options?.skipBuild) {
+			console.log('[AdoptProject] Running bun install...');
+			await this.runBunInstall.execute(cwd);
+		} else {
+			console.log('[AdoptProject] Skipping bun install.');
+		}
 		console.log('[AdoptProject] Adoption complete!');
 	}
 }

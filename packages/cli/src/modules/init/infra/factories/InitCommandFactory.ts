@@ -38,9 +38,9 @@ export class InitCommandFactory {
 		});
 	}
 
-	public static create(): InitCommand {
+	public create(): InitCommand {
 		const userInterface = new EnquirerAdapter();
-		const selectTemplateUseCase = new SelectTemplateUseCase({ userInterface });
+		const selectTemplateUseCase = InitCommandFactory.createSelectTemplateUseCase();
 
 		const filesystem = new NodeFilesystemAdapter();
 		const packageJson = new PackageJsonAdapter();
@@ -56,20 +56,10 @@ export class InitCommandFactory {
 		});
 
 		const applyBunstartRulesUseCase = InitCommandFactory.createApplyBunstartRulesUseCase();
-		const bootstrapApiRestUseCase = new BootstrapApiRestUseCase({
-			bunRuntime,
-			applyBunstartRules: applyBunstartRulesUseCase
-		});
-		const bootstrapFrontendReactUseCase = new BootstrapFrontendReactUseCase({
-			bunRuntime,
-			userInterface,
-			filesystem,
-			applyBunstartRules: applyBunstartRulesUseCase
-		});
-		const bootstrapLibraryUseCase = new BootstrapLibraryUseCase({
-			bunRuntime,
-			applyBunstartRules: applyBunstartRulesUseCase
-		});
+		const bootstrapApiRestUseCase = InitCommandFactory.createBootstrapApiRestUseCase();
+		const bootstrapFrontendReactUseCase = InitCommandFactory.createBootstrapFrontendReactUseCase();
+		const bootstrapLibraryUseCase = InitCommandFactory.createBootstrapLibraryUseCase();
+
 
 		return new InitCommand({
 			userInterface,
@@ -78,6 +68,46 @@ export class InitCommandFactory {
 			bootstrapApiRestUseCase,
 			bootstrapFrontendReactUseCase,
 			bootstrapLibraryUseCase
+		});
+	}
+
+	public static create(): InitCommand {
+		return new InitCommandFactory().create();
+	}
+
+	public static createSelectTemplateUseCase(): SelectTemplateUseCase {
+		const userInterface = new EnquirerAdapter();
+		return new SelectTemplateUseCase({ userInterface });
+	}
+
+	public static createBootstrapApiRestUseCase(): BootstrapApiRestUseCase {
+		const bunRuntime = new BunRuntimeAdapter();
+		const applyBunstartRules = InitCommandFactory.createApplyBunstartRulesUseCase();
+		return new BootstrapApiRestUseCase({
+			bunRuntime,
+			applyBunstartRules
+		});
+	}
+
+	public static createBootstrapFrontendReactUseCase(): BootstrapFrontendReactUseCase {
+		const bunRuntime = new BunRuntimeAdapter();
+		const userInterface = new EnquirerAdapter();
+		const filesystem = new NodeFilesystemAdapter();
+		const applyBunstartRules = InitCommandFactory.createApplyBunstartRulesUseCase();
+		return new BootstrapFrontendReactUseCase({
+			bunRuntime,
+			userInterface,
+			filesystem,
+			applyBunstartRules
+		});
+	}
+
+	public static createBootstrapLibraryUseCase(): BootstrapLibraryUseCase {
+		const bunRuntime = new BunRuntimeAdapter();
+		const applyBunstartRules = InitCommandFactory.createApplyBunstartRulesUseCase();
+		return new BootstrapLibraryUseCase({
+			bunRuntime,
+			applyBunstartRules
 		});
 	}
 }
