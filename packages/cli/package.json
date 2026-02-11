@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "version": "0.0.2",
+  "version": "0.2.0",
   "name": "@bunstart/cli",
   "module": "dist/index.js",
   "files": [
