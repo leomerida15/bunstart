@@ -1,16 +1,16 @@
 {
   "type": "module",
-  "module": "index.ts",
-  "name": "@bunstart",
+  "name": "bunstart",
   "private": true,
   "workspaces": [
-    "packages/*",
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "devDependencies": {
     "@types/bun": "latest",
     "prettier": "^3.8.0",
-    "type-fest": "^5.4.1"
+    "type-fest": "^5.4.1",
+    "typescript": "^5"
   },
   "peerDependencies": {
     "typescript": "^5"
