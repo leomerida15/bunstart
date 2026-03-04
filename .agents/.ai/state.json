@@ -1,11 +1,11 @@
 {
   "manifest": {
-    "lastProcessedAt": 1772638907699,
+    "lastProcessedAt": 1772640036329,
     "lastActiveAgent": "antigravity",
     "currentAgent": "antigravity",
     "agents": {
       "antigravity": {
-        "lastProcessedAt": 1772638907699
+        "lastProcessedAt": 1772640036329
       },
       "cursor": {
         "lastProcessedAt": 0
