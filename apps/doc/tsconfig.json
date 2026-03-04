@@ -14,13 +14,6 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
 
-    // Path aliases
-    "baseUrl": "../../",
-    "paths": {
-      "@app/*": ["./apps/*"],
-      "@pkg/*": ["./packages/*"]
-    },
-
     // Best practices
     "strict": true,
     "skipLibCheck": true,

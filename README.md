@@ -122,8 +122,8 @@ buns mono <alias> <script|cmd> [args...]
 |------------|--------------|
 | `create [name]` | Creates a new directory and runs `buns init` inside it to bootstrap a nested project. |
 | `migrate` | Migrates an existing monorepo to bunstart layout and config (workspaces, scripts, dependsOn). |
-| `generate app <name>` / `gen app <name>` | Scaffolds a new app, adds it to workspaces and bunstart config. |
-| `generate pkg <name>` / `gen pkg <name>` | Scaffolds a new package, adds it to workspaces and bunstart config. |
+| `generate app <name>` / `gen app <name>` | Scaffolds a new app (can optionally accept `--template <template>` or uses interactive prompt), adds it to workspaces and bunstart config. |
+| `generate pkg <name>` / `gen pkg <name>` | Scaffolds a new package (can optionally accept `--template <template>` or uses interactive prompt), adds it to workspaces and bunstart config. |
 | `build <alias>` | Runs the `build` script in the workspace identified by `<alias>`. Ensures config and dependencies are synced first. |
 | `dev <alias>` | Runs the `dev` script in the workspace (e.g. watch mode). |
 | `start <alias>` | Runs the `start` script in the workspace. |
@@ -139,8 +139,8 @@ buns mono <alias> <script|cmd> [args...]
 |--------|-------------|
 | `buns mono <alias> <script>` | Run a npm/bun script (e.g. `test`, `lint`) in that workspace. |
 | `buns mono <alias> add <pkg>` | Run `bun add <pkg>` in that workspace. |
-| `buns mono <alias> add-dep <source> [--dev\|--peer\|--optional\|--exact]` | Add another workspace as a dependency and sync config. |
-| `buns mono <alias> remove-dep <source>` | Remove a workspace dependency and sync config. |
+| `buns mono <alias> add-dep \| a-dep <source> [--dev\|--peer\|--optional\|--exact]` | Add another workspace as a dependency and sync config. |
+| `buns mono <alias> remove-dep \| rm-dep \| r-dep <source>` | Remove a workspace dependency and sync config. |
 
 **Examples:**
 
