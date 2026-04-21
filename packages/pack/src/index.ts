@@ -83,3 +83,9 @@ export type { PackageAnalyzerPort } from './modules/build-engine/domain/ports/Pa
 
 // Re-export DTS types
 export type { DtsEmitterResult } from './modules/dts-emitter/domain/value-objects/DtsEmitterResult';
+
+// Re-export incremental build types
+export { ContentHash } from './modules/incremental-build/domain/value-objects/ContentHash';
+export { BuildCache } from './modules/incremental-build/domain/entities/BuildCache';
+export type { RebuildCheckResult } from './modules/incremental-build/app/use-cases/CheckIfRebuildNeededUseCase';
+export { InvalidateCacheUseCase } from './modules/incremental-build/app/use-cases/InvalidateCacheUseCase';

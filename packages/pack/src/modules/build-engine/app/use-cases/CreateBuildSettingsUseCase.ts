@@ -36,6 +36,30 @@ export interface UserBuildConfig {
 		 */
 		outDir?: string;
 	};
+	/**
+	 * Whether to enable incremental builds with content hashing cache.
+	 * @default false
+	 */
+	incremental?: boolean;
+	/**
+	 * Configuration for asset pipeline (public assets, HTML template).
+	 */
+	assets?: {
+		/**
+		 * Directory containing public assets to copy to dist.
+		 * @default "./public"
+		 */
+		publicDir?: string;
+		/**
+		 * HTML template to rewrite with asset hashes.
+		 */
+		htmlTemplate?: string;
+		/**
+		 * Whether to process CSS files.
+		 * @default true
+		 */
+		processCss?: boolean;
+	};
 }
 
 /**
@@ -87,7 +111,15 @@ export class CreateBuildSettingsUseCase {
 						enable: userConfig.dts.enable ?? false,
 						entrypoints: userConfig.dts.entrypoints ?? ['./src/index.ts'],
 						outDir: userConfig.dts.outDir,
-					}
+				  }
+				: undefined,
+			incremental: userConfig.incremental ?? false,
+			assets: userConfig.assets
+				? {
+						publicDir: userConfig.assets.publicDir ?? './public',
+						htmlTemplate: userConfig.assets.htmlTemplate,
+						processCss: userConfig.assets.processCss ?? true,
+				  }
 				: undefined,
 		};
 	}
