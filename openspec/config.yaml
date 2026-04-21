@@ -10,6 +10,9 @@ domains:
   - name: pack
     description: "@bunstart/pack - Build engine para Bunstart"
     sourceOfTruth: openspec/specs/pack/spec.md
+  - name: cli
+    description: "@bunstart/cli - CLI para inicialización y manejo de monorepos"
+    sourceOfTruth: openspec/specs/cli/spec.md
 
 rules:
   archive:
