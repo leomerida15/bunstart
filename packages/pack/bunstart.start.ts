@@ -6,9 +6,9 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const distDir = resolve(__dirname, 'dist');
+const coreDir = resolve(__dirname, 'core');
 const result = spawnSync('bun', ['run', 'index.js'], {
-  cwd: distDir,
+  cwd: coreDir,
   stdio: 'inherit',
   shell: false
 });

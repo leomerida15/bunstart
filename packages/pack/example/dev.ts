@@ -12,7 +12,7 @@
  * Then open http://localhost:3000
  */
 
-import { buildSetting } from "../src/index.ts";
+import { buildSetting } from "../core";
 import { existsSync, mkdirSync } from "node:fs";
 
 const outdir = "./example/dist";

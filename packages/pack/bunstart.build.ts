@@ -1,11 +1,14 @@
 /**
  * Build script: compiles TypeScript and emits declaration files.
+ * Uses @bunstart/pack (via core/) to build itself.
  */
 import isolatedDecl from 'bun-plugin-isolated-decl';
+import { buildSetting } from './core';
 
 export async function build(): Promise<void> {
 	console.log('Building...');
-	await Bun.build({
+
+	const { build: packBuild } = buildSetting({
 		entrypoints: ['src/index.ts'],
 		outdir: 'dist',
 		target: 'bun',
@@ -15,19 +18,7 @@ export async function build(): Promise<void> {
 		plugins: [isolatedDecl()],
 	});
 
-	const proc = Bun.spawn(
-		['bun', 'run', 'tsc', '--emitDeclarationOnly', '--declaration', '--outDir', 'dist'],
-		{
-			cwd: process.cwd(),
-			stdout: 'inherit',
-			stderr: 'inherit',
-		},
-	);
-
-	const exitCode = await proc.exited;
-	if (exitCode !== 0) {
-		throw new Error(`tsc failed with exit code ${exitCode}`);
-	}
+	await packBuild();
 
 	console.log('Build completed');
 }
