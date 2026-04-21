@@ -47,8 +47,7 @@ Examples:
  * @returns {void}
  */
 function showVersion(): void {
-	// Version could be read from package.json in the future
-	console.log('bunstart CLI v0.1.0');
+	console.log('bunstart CLI v0.4.4');
 }
 
 /**
