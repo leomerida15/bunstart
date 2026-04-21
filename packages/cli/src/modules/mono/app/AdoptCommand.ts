@@ -1,5 +1,6 @@
 import { AdoptProjectUseCase } from './use-cases/AdoptProjectUseCase';
 import type { UserInterfacePort } from '../../init/domain/ports/UserInterface.port';
+import { dirname, basename } from 'node:path';
 
 export interface AdoptCommandOptions {
     skipBuild?: boolean;
@@ -27,7 +28,7 @@ export class AdoptCommand {
         // Name is the basename of cwd.
         // Type defaults to 'app' for `bun create` templates usually.
 
-        const name = cwd.split('/').pop() || 'unknown';
+        const name = basename(cwd) || 'unknown';
         const type = 'app'; // Default for create flow
 
         console.log(`Adopting ${name} as ${type}...`);
@@ -36,7 +37,7 @@ export class AdoptCommand {
         // If we are in `cwd` (which is the new project dir), the root is parent.
         // But `AdoptProjectUseCase` needs `cwd` to be the root.
 
-        const monorepoRoot = options.cwd ? options.cwd.split('/').slice(0, -1).join('/') : process.cwd();
+        const monorepoRoot = options.cwd ? dirname(options.cwd) : process.cwd();
 
         await this.adoptProjectUseCase.execute(
             monorepoRoot,

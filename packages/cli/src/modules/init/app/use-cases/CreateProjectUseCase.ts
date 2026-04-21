@@ -6,6 +6,7 @@ import { InitCommand } from '../InitCommand';
 import { AdoptCommand } from '../../../mono/app/AdoptCommand';
 import { DelegateToBunCreateUseCase } from './DelegateToBunCreateUseCase';
 import type { MonorepoContextResult } from '../../domain/ports/MonorepoContext.port';
+import { basename } from 'node:path';
 
 /**
  * Result of the create project operation.
@@ -227,7 +228,7 @@ export class CreateProjectUseCase {
                 cwd: targetDir,
                 skipBuild: !generateBuildScripts
             });
-            const projectName = targetDir.split('/').pop() ?? '';
+            const projectName = basename(targetDir);
             const finalPath = `${context.monorepoRoot}/apps/${projectName}`;
             return { success: true, projectPath: finalPath };
         }
