@@ -3,6 +3,7 @@ import type {
     MonorepoContextResult
 } from '../../domain/ports/MonorepoContext.port';
 import type { FilesystemPort } from '../../domain/ports/Filesystem.port';
+import { dirname } from 'node:path';
 
 /**
  * Adapter for detecting monorepo context.
@@ -47,8 +48,6 @@ export class MonorepoContextAdapter implements MonorepoContextPort {
     }
 
     private getParentPath(path: string): string {
-        const segments = path.split('/');
-        segments.pop();
-        return segments.join('/') || '/';
+        return dirname(path) || '/';
     }
 }
