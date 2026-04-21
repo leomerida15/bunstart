@@ -138,11 +138,16 @@ export class ApplyBunstartRulesAdapter implements ApplyBunstartRulesPort {
 			projectName?: string;
 			projectType?: 'backend' | 'frontend';
 			startCommand?: string;
+			isMonorepoWorkspace?: boolean;
 		}
 	): Promise<void> {
 		const pkgPath = join(cwd, 'package.json');
 		const startScript =
 			options?.startCommand ?? 'bun src/index.ts';
+		const current = await this.packageJson.read(pkgPath);
+		const existingDeps = (current.dependencies as Record<string, string>) ?? {};
+		const existingDevDeps = (current.devDependencies as Record<string, string>) ?? {};
+		
 		const patch: Record<string, unknown> = {
 			scripts: {
 				build: 'bun run -b bunstart.build.ts',
@@ -152,16 +157,17 @@ export class ApplyBunstartRulesAdapter implements ApplyBunstartRulesPort {
 			},
 			module: 'dist/index.js',
 			main: 'dist/index.js',
-			types: 'dist/index.d.ts'
+			types: 'dist/index.d.ts',
+			dependencies: {
+				...existingDeps,
+				'@bunstart/pack': options?.isMonorepoWorkspace ? 'workspace:*' : '^0.0.1'
+			}
 		};
 		if (options?.projectName !== undefined) {
 			patch.name = options.projectName;
 			patch.version = '0.0.1';
 		}
 		if (options?.projectType === 'frontend') {
-			const current = await this.packageJson.read(pkgPath);
-			const existingDevDeps = (current.devDependencies as Record<string, string>) ?? {};
-			const existingDeps = (current.dependencies as Record<string, string>) ?? {};
 			const hasTailwindPlugin =
 				'bun-plugin-tailwind' in existingDeps || 'bun-plugin-tailwind' in existingDevDeps;
 			if (!hasTailwindPlugin) {

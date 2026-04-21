@@ -1,7 +1,9 @@
 #!/usr/bin/env bun
 /**
  * Frontend build script — run with Bun: `bun run bunstart.build.ts` or `bun bunstart.build.ts`
+ * Uses @bunstart/pack for unified build configuration.
  */
+import { buildSetting } from '@bunstart/pack';
 import BunPluginTailwind from 'bun-plugin-tailwind';
 import { existsSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
@@ -36,17 +38,20 @@ export async function build(): Promise<void> {
 
   console.log(`Found ${entrypoints.length} HTML ${entrypoints.length === 1 ? 'file' : 'files'} to process\n`);
 
-  const result = await Bun.build({
+  const { build: packBuild } = buildSetting({
     entrypoints,
-    outdir,
-    plugins: [BunPluginTailwind],
-    minify: true,
+    outdir: 'dist',
     target: 'browser',
+    format: 'esm',
+    minify: true,
     sourcemap: 'linked',
+    plugins: [BunPluginTailwind],
     define: {
       'process.env.NODE_ENV': JSON.stringify('production'),
     },
   });
+
+  const result = await packBuild();
 
   const end = performance.now();
 
