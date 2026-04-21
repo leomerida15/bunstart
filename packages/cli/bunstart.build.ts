@@ -1,84 +1,60 @@
 /**
- * Build script for the CLI package.
+ * Build script for the CLI package using @bunstart/pack.
  *
- * Execute this script using Bun CLI:
+ * Usage:
  *   bun run bunstart.build.ts
- *
- * Or via npm script:
  *   bun run build
- *
- * This script builds the TypeScript source files from src/ to dist/
- * with minification and source maps enabled, and adds a shebang to
- * the output file for direct execution.
  */
-import { cpSync, mkdirSync, existsSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync } from 'node:fs';
+import { buildSetting } from '@bunstart/pack';
 
-/**
- * Build configuration for the CLI package.
- *
- * Centralized configuration for all build operations.
- */
-export const buildConfig = {
-    entrypoints: ["src/index.ts"],
-    outdir: "dist",
-    target: "bun" as const,
-    format: "esm" as const,
-    minify: true,
-    sourcemap: false,
-    outputPath: "dist/index.js",
-    shebang: "#!/usr/bin/env bun\n"
-};
+const outdir = 'dist';
 
-/**
- * Executes the build process.
- *
- * This function can be imported and used by other scripts (e.g., watch script)
- * to maintain a centralized build configuration.
- *
- * @returns {Promise<void>}
- */
-export async function build(): Promise<void> {
-    try {
-        const result = await Bun.build({
-            entrypoints: buildConfig.entrypoints,
-            outdir: buildConfig.outdir,
-            target: buildConfig.target,
-            format: buildConfig.format,
-            minify: buildConfig.minify,
-            sourcemap: buildConfig.sourcemap
-        });
+async function build(): Promise<void> {
+	console.log('🔨 Building CLI with @bunstart/pack...\n');
 
-        // Add shebang to the output file
-        const outputFile = Bun.file(buildConfig.outputPath);
-        const content = await outputFile.text();
+	// Build using pack
+	const { build } = buildSetting({
+		entrypoints: ['./src/index.ts'],
+		outdir,
+		target: 'bun',
+		format: 'esm',
+		minify: true,
+		sourcemap: false,
+	});
 
-        // Add shebang if not already present
-        const contentWithShebang = content.startsWith("#!")
-            ? content
-            : buildConfig.shebang + content;
+	await build();
 
-        await Bun.write(buildConfig.outputPath, contentWithShebang);
+	// Add shebang to the output file
+	const outputFile = `${outdir}/index.js`;
+	const file = Bun.file(outputFile);
+	const content = await file.text();
 
-        // Copy templates to dist for runtime resolution
-        const templatesSrc = "src/utils/template";
-        const templatesDest = "dist/utils/template";
-        if (!existsSync(templatesDest)) mkdirSync(templatesDest, { recursive: true });
-        cpSync(templatesSrc, templatesDest, { recursive: true });
+	const contentWithShebang = content.startsWith('#!')
+		? content
+		: `#!/usr/bin/env bun\n${content}`;
 
-        console.log("Build completed 🟢");
-    } catch (error) {
-        console.error("Build failed 🔴", error);
-        throw error;
-    }
+	await Bun.write(outputFile, contentWithShebang);
+
+	// Copy templates to dist for runtime resolution
+	const templatesSrc = 'src/utils/template';
+	const templatesDest = `${outdir}/utils/template`;
+	if (!existsSync(templatesDest)) {
+		mkdirSync(templatesDest, { recursive: true });
+	}
+	cpSync(templatesSrc, templatesDest, { recursive: true });
+
+	console.log('✅ CLI build completed');
 }
 
-// Execute build if script is run directly (not imported)
-// Check if this file is being executed directly by checking if it's the main module
-const isMainModule = process.argv[1]?.endsWith('bunstart.build.ts') ||
-    process.argv[1]?.endsWith('bunstart.build.js');
+// Run if main
+const isMain =
+	process.argv[1]?.endsWith('bunstart.build.ts') ||
+	process.argv[1]?.endsWith('bunstart.build.js');
 
-if (isMainModule) {
-    build().catch((error) => {
-        process.exit(1);
-    });
+if (isMain) {
+	build().catch((e) => {
+		console.error('❌ Build failed:', e);
+		process.exit(1);
+	});
 }

@@ -2,12 +2,50 @@
 
 ## Context
 
-Primer plugin interno del ecosistema. Genera archivos `.d.ts` usando `isolatedDeclarations: true` (TypeScript 5.5+). Es el metodo mas rapido para emitir declaraciones de tipo sin el overhead del type-checking completo. Fomenta el uso de tipos explicitos en miembros exportados.
+> ⚠️ **Decision de Arquitectura (2026-04-21):** Este módulo existe como abstracción, pero NO implementamos la generación de .d.ts internamente. Recomendamos usar **bun-plugin-isolated-decl** como plugin externo para generación de declaraciones.
+
+### Recomendación: bun-plugin-isolated-decl
+
+```bash
+bun add -d bun-plugin-isolated-decl
+```
+
+```typescript
+import { isolatedDecl } from "bun-plugin-isolated-decl";
+
+await Bun.build({
+  entrypoints: ["./src/index.ts"],
+  plugins: [isolatedDecl()],
+});
+```
+
+**Por qué bun-plugin-isolated-decl:**
+- Usa el compilador de TypeScript directamente (tsc)
+- Genera .d.ts correctos sin type-checking completo
+- Mucho más rápido que tsc --declarations
+- Soporta isolated declarations para tipos minimalistas
+- Comunidad activa y mantenida
+
+### Antigua idea (DESCARTADA)
+
+Intentamos usar `isolatedDeclarations: true` de TypeScript 5.5+, pero NO existe como API pública en Bun.Tampoco usamos `bun-plugin-dts` por limitaciones en el manejo de paths.
 
 ## Dependencies
 
 - **Depende de**: Sprint 2 (plugin-system) - es un plugin que se registra en el sistema.
 - **Dependientes**: Ninguno directamente, pero es consumido por el build-engine via plugin-system.
+
+## Status: ✅ COMPLETADO (2026-04-10)
+
+El módulo dts-emitter fue implementado con arquitectura hexagonal, pero como **interfaz de configuración** que delega al plugin externo.
+
+**Lo que se implementó:**
+- Domain: DtsConfig, DtsEmitterResult, DtsEmitterError
+- Ports: DtsEmitterPort
+- Use Cases: EmitDtsUseCase
+- Infra: BunPluginDtsAdapter (stub que indica usar plugin externo)
+
+**No se implementó:** Generación real de .d.ts (delegado a bun-plugin-isolated-decl)
 
 ## Estructura del Modulo
 
@@ -15,59 +53,41 @@ Primer plugin interno del ecosistema. Genera archivos `.d.ts` usando `isolatedDe
 modules/dts-emitter/
 ├── domain/
 │   ├── entities/
-│   │   ├── DeclarationFile.ts           # Representa un .d.ts generado
-│   │   └── EmitterConfig.ts             # Config del emisor (outDir, rootDir, etc.)
+│   │   └── DtsEmitterError.ts          # Errores del emisor
 │   ├── value-objects/
-│   │   └── DeclarationPath.ts           # Ruta validada de output .d.ts
-│   ├── ports/
-│   │   └── TypeEmitter.port.ts          # Interface para emitir declaraciones
-│   └── services/
-│       └── DeclarationPathResolver.ts   # Resuelve rutas de output .d.ts
+│   │   ├── DtsConfig.ts                 # Configuracion del emisor
+│   │   └── DtsEmitterResult.ts         # Resultado de la emision
+│   └── ports/
+│       └── DtsEmitter.port.ts           # Interface para emitir declaraciones
 ├── app/
 │   └── use-cases/
-│       ├── EmitDeclarationsUseCase.ts   # Orquesta la emision de .d.ts
-│       └── CreateDtsPluginUseCase.ts    # Crea el BunPlugin listo para registrar
+│       └── EmitDtsUseCase.ts            # Orquesta la emision de .d.ts
 ├── infra/
 │   ├── adapters/
-│   │   └── BunIsolatedDeclarationsAdapter.ts  # Usa TS compiler API con isolatedDeclarations
+│   │   └── BunPluginDtsAdapter.ts      # Adapter (stub, delega a plugin externo)
 │   └── factories/
 │       └── DtsEmitterFactory.ts
 └── index.ts
 ```
 
-## Pasos a Ejecutar
+## Uso Recomendado
 
-### Paso 1: Domain Layer
-- [ ] Definir `DeclarationFile` entity (sourcePath, outputPath, content)
-- [ ] Definir `EmitterConfig` entity (outDir, rootDir, include/exclude patterns)
-- [ ] Implementar `DeclarationPath` VO
-- [ ] Definir `TypeEmitterPort` interface
-- [ ] Implementar `DeclarationPathResolver` domain service
+```typescript
+// En tu proyecto
+import { buildSetting } from "@bunstart/pack";
+import { isolatedDecl } from "bun-plugin-isolated-decl";
 
-### Paso 2: Application Layer
-- [ ] Implementar `EmitDeclarationsUseCase` - coordina emision de todos los .d.ts
-- [ ] Implementar `CreateDtsPluginUseCase` - retorna un BunPlugin compatible con el plugin-system
+const { build } = buildSetting({
+  entrypoints: ["./src/index.ts"],
+  plugins: [isolatedDecl()],
+});
 
-### Paso 3: Infrastructure Layer
-- [ ] Investigar API de TypeScript para `isolatedDeclarations` en Bun
-- [ ] Implementar `BunIsolatedDeclarationsAdapter` que usa `ts.transpileDeclaration` o equivalente
-- [ ] Implementar `DtsEmitterFactory`
+await build(); // Genera ./dist/index.js + ./dist/index.d.ts
+```
 
-### Paso 4: Integracion como Plugin
-- [ ] Registrar el dts-emitter como plugin interno disponible por defecto
-- [ ] Integrar con `buildSetting()` via opcion `dts: true` o `dts: { ... }`
-- [ ] Documentar API con JSDoc
+## Por qué no integramos bun-plugin-isolated-decl internamente
 
-### Paso 5: Tests
-- [ ] Tests unitarios para DeclarationPathResolver
-- [ ] Test de integracion: emitir .d.ts desde un modulo TypeScript simple
-- [ ] Test E2E: buildSetting con dts habilitado genera .d.ts correctos
-- [ ] Verificar que `isolatedDeclarations` rechaza tipos no explicitos
-
-## Status
-
-- [ ] Paso 1: Domain Layer
-- [ ] Paso 2: Application Layer
-- [ ] Paso 3: Infrastructure Layer
-- [ ] Paso 4: Integracion como Plugin
-- [ ] Paso 5: Tests
+1. **Mantenimiento**: El plugin evoluciona independientemente
+2. **Flexibilidad**: Permite configurar opciones avanzadas
+3. **Simplicidad**: No duplicamos dependencias en @bunstart/pack
+4. **Best practice**: Cada herramienta hace lo que mejor sabe hacer
