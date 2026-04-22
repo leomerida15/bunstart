@@ -30,9 +30,9 @@ jobs:
             - name: 🛠️ Build @bunstart/pack
               run: bun run --filter '@bunstart/pack' build
 
-            - name: 🚀 Publish @supabase-kit/cli to npm
+            - name: 🚀 Publish @bunstart/pack to npm
               uses: JS-DevTools/npm-publish@v1
               with:
                   token: ${{ secrets.NPM_TOKEN }}
-                  package: packages/cli/package.json
+                  package: packages/pack/package.json
                   access: public
