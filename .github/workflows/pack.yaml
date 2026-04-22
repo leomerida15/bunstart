@@ -30,6 +30,9 @@ jobs:
             - name: 🛠️ Build @bunstart/pack
               run: bun run --filter '@bunstart/pack' build
 
+            - name: Configure npm auth
+              run: echo '//registry.npmjs.org/:_auth=${{ secrets.NPM_TOKEN }}' > packages/pack/.npmrc
+
             - name: 🚀 Publish @bunstart/pack to npm
               run: npm publish --access public
               working-directory: packages/pack
