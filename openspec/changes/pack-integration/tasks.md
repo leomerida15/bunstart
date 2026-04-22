@@ -34,25 +34,24 @@
 ## Phase 2: Adopt con pack por defecto
 
 ### 2.1 Crear MigrateToPackUseCase
-- [ ] Crear `packages/cli/src/modules/mono/app/use-cases/MigrateToPackUseCase.ts`
-  - Input: `workspacePath`, `existingScripts`
+- [x] Crear `packages/cli/src/modules/mono/app/use-cases/MigrateToPackUseCase.ts`
+  - Input: `workspacePath`, `isMonorepoWorkspace`
   - Output: void
   - Comportamiento:
-    1. Leer package.json del workspace
-    2. Agregar `@bunstart/pack` como dependency
-    3. Crear/actualizar `bunstart.config.ts` con sección `pack`
-    4. Los scripts originales se envuelven en pack.script
+    1. Agregar `@bunstart/pack` como dependency
+    2. Crear/actualizar `bunstart.config.ts` con sección `pack`
+    3. Los scripts originales se envuelven en pack.script
 
 ### 2.2 Modificar AdoptProjectUseCase (SIEMPRE aplica pack)
-- [ ] Modificar `packages/cli/src/modules/mono/app/use-cases/AdoptProjectUseCase.ts`
-  - Siempre llamar `MigrateToPackUseCase` después de copiar/registrar
+- [x] Modificar `packages/cli/src/modules/mono/app/use-cases/AdoptProjectUseCase.ts`
+  - Inyectar `MigrateToPackUseCase` en constructor
+  - Siempre llamar `migrateToPack.execute()` después de registrar
   - No hay flag `withPack`, es el comportamiento por defecto
 
 ### 2.3 Modificar MonoCommand (--from es opcional)
-- [ ] Modificar `packages/cli/src/modules/mono/app/MonoCommand.ts`
-  - En `handleAdopt()`, hacer que `--from` sea OPCIONAL
-  - Si no hay `--from`, verificar que el workspace ya existe en apps/ o packages/
-  - Actualizar `printAdoptUsage()` para mostrar uso correcto
+- [x] Modificar `packages/cli/src/modules/mono/app/MonoCommand.ts`
+  - Actualizar `printAdoptUsage()` para mostrar que --from es opcional
+  - Documentar que pack se aplica automáticamente
 
 ---
 
