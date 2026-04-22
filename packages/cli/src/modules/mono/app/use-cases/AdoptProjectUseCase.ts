@@ -7,6 +7,7 @@ import type { AddPackageUseCase } from './AddPackageUseCase';
 import type { RunBunInstallPort } from '../../domain/ports/RunBunInstall.port';
 import { getScope } from '../../domain/services/WorkspaceResolver';
 import type { RepoConfig } from '../../domain/entities/RepoConfig';
+import type { MigrateToPackUseCase } from './MigrateToPackUseCase';
 
 export interface AdoptProjectUseCaseProps {
 	loadConfig: LoadConfigUseCase;
@@ -15,6 +16,7 @@ export interface AdoptProjectUseCaseProps {
 	addApp: AddAppUseCase;
 	addPackage: AddPackageUseCase;
 	runBunInstall: RunBunInstallPort;
+	migrateToPack: MigrateToPackUseCase;
 }
 
 /**
@@ -29,6 +31,7 @@ export class AdoptProjectUseCase {
 	private readonly addApp: AddAppUseCase;
 	private readonly addPackage: AddPackageUseCase;
 	private readonly runBunInstall: RunBunInstallPort;
+	private readonly migrateToPack: MigrateToPackUseCase;
 
 	constructor({
 		loadConfig,
@@ -37,6 +40,7 @@ export class AdoptProjectUseCase {
 		addApp,
 		addPackage,
 		runBunInstall,
+		migrateToPack,
 	}: AdoptProjectUseCaseProps) {
 		this.loadConfig = loadConfig;
 		this.packageJson = packageJson;
@@ -44,6 +48,7 @@ export class AdoptProjectUseCase {
 		this.addApp = addApp;
 		this.addPackage = addPackage;
 		this.runBunInstall = runBunInstall;
+		this.migrateToPack = migrateToPack;
 	}
 
 	async execute(
@@ -110,6 +115,9 @@ export class AdoptProjectUseCase {
 		} else {
 			await this.addPackage.execute(cwd, trimmedName, packageName, []);
 		}
+
+		console.log('[AdoptProject] Migrating to @bunstart/pack...');
+		await this.migrateToPack.execute(workspacePath, true);
 
 		if (!options?.skipBuild) {
 			console.log('[AdoptProject] Running bun install...');

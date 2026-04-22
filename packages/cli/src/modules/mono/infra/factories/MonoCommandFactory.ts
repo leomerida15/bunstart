@@ -11,6 +11,7 @@ import { AddWorkspaceDepUseCase } from '../../app/use-cases/AddWorkspaceDepUseCa
 import { RemoveWorkspaceDepUseCase } from '../../app/use-cases/RemoveWorkspaceDepUseCase';
 import { EnsureConfigSyncedUseCase } from '../../app/use-cases/EnsureConfigSyncedUseCase';
 import { AdoptProjectUseCase } from '../../app/use-cases/AdoptProjectUseCase';
+import { MigrateToPackUseCase } from '../../app/use-cases/MigrateToPackUseCase';
 import { BunRunInWorkspaceAdapter } from '../adapters/BunRunInWorkspaceAdapter';
 import { BunBuildWorkspaceAdapter } from '../adapters/BunBuildWorkspaceAdapter';
 import { BunRunBunInstallAdapter } from '../adapters/BunRunBunInstallAdapter';
@@ -76,13 +77,18 @@ export class MonoCommandFactory {
 			patchConfig: this.patchConfig
 		});
 		const runBunInstall = new BunRunBunInstallAdapter();
+		const migrateToPack = new MigrateToPackUseCase({
+			packageJson: this.packageJson,
+			filesystem
+		});
 		const adoptProject = new AdoptProjectUseCase({
 			loadConfig: this.loadConfig,
 			packageJson: this.packageJson,
 			filesystem,
 			addApp,
 			addPackage,
-			runBunInstall
+			runBunInstall,
+			migrateToPack
 		});
 
 		const initCommand = InitCommandFactory.create();

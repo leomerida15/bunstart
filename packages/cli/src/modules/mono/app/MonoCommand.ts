@@ -467,7 +467,12 @@ export class MonoCommand {
 
 	private printAdoptUsage(): void {
 		console.error(
-			'Usage: buns mono adopt app <name> [--from <path>] | buns mono adopt pkg <name> [--from <path>]'
+			'Usage: buns mono adopt app <name> [--from <path>]\n' +
+			'       buns mono adopt pkg <name> [--from <path>]\n' +
+			'\n' +
+			'Adopts an existing workspace into the monorepo with @bunstart/pack integration.\n' +
+			'If --from is not provided, the workspace must already exist in apps/ or packages/.\n' +
+			'Pack configuration is automatically applied to all adopted workspaces.'
 		);
 	}
 
