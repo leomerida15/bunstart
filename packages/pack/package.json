@@ -1,7 +1,11 @@
 {
 	"name": "@bunstart/pack",
-	"module": "dist/index.js",
-	"type": "module",
+  "module": "dist/index.js",
+  "type": "module",
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
 	"exports": {
 		".": {
 			"import": "./dist/index.js",
@@ -25,5 +29,6 @@
 	},
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
-	"version": "0.2.1"
+	"version": "0.2.1",
+  "license": "Apache-2.0",
 }

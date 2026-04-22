@@ -2,9 +2,11 @@
   "type": "module",
   "version": "0.6.1",
   "name": "@bunstart/cli",
+  "license": "Apache-2.0",
   "module": "dist/index.js",
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "bin": {
     "bunstart": "./dist/index.js",
