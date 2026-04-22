@@ -11,6 +11,14 @@ export interface PackageJsonWorkspacesAdapterProps {
 }
 
 /**
+ * Normalizes a path to use forward slashes (Unix-style).
+ * This ensures consistent path handling across Windows and Unix-like systems.
+ */
+function normalizePathToUnixSeparator(path: string): string {
+	return path.replace(/\\/g, '/');
+}
+
+/**
  * Resolves workspaces from package.json workspaces field, merges dependsOn from bunstart.config.
  */
 export class PackageJsonWorkspacesAdapter implements ResolveWorkspacesPort {
@@ -37,7 +45,9 @@ export class PackageJsonWorkspacesAdapter implements ResolveWorkspacesPort {
 			const glob = new Glob(globPattern);
 			for await (const match of glob.scan({ cwd })) {
 				// match is e.g. "apps/app-example/package.json" -> dir="apps", id="app-example"
-				const relPath = match.replace(/\/package\.json$/, '');
+				// Normalize to forward slashes for cross-platform compatibility
+				const normalizedMatch = normalizePathToUnixSeparator(match);
+				const relPath = normalizedMatch.replace(/\/package\.json$/, '');
 				workspacePaths.add(relPath);
 			}
 		}
