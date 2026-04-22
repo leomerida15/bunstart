@@ -71,7 +71,9 @@
 ## Phase 4: Agent Skill
 
 ### 4.1 Crear skill bunstart
-- [ ] Crear `.opencode/skills/bunstart/SKILL.md`
+- [x] Crear skill en repo separado `leomerida15/bunstart-skills`
+  - Archivo: `skills/bunstart/SKILL.md`
+  - README.md para el repo
   - Secciones:
     1. When to Use (triggers)
     2. Critical Patterns (comandos CLI, buildSetting API)
@@ -79,9 +81,10 @@
     4. Commands Reference
     5. Troubleshooting
 
-### 4.2 Copiar skill para otros agentes
-- [ ] Copiar a `.agents/skills/bunstart/SKILL.md`
-  - Mismo contenido, disponibilidad multi-agente
+### 4.2 Publicar en skills.sh
+- [ ] Publicar repo en GitHub (ya está creado)
+- [ ] Testear instalación: `npx skills add leomerida15/bunstart-skills`
+- [ ] Agregar a skills.sh leaderboard
 
 ---
 
