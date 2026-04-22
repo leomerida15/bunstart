@@ -58,6 +58,7 @@ jobs:
                   repository: leomerida15/bunstart-skills
                   path: bunstart-skills
                   fetch-depth: 0
+                  token: ${{ secrets.GITHUB_TOKEN }}
 
             - name: 📁 Copy skill files
               run: |
@@ -90,3 +91,5 @@ jobs:
                   
                   git push origin main
                   echo "✅ Skills synced to bunstart-skills"
+              env:
+                  GIT_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
