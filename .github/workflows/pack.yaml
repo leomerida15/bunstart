@@ -33,6 +33,5 @@ jobs:
             - name: 🚀 Publish @bunstart/pack to npm
               run: npm publish --access public
               working-directory: packages/pack
-              continue-on-error: true
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
