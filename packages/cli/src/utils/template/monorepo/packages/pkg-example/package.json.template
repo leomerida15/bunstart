@@ -16,6 +16,9 @@
     "watch": "bun run -b bunstart.watch.ts",
     "dev": "bun run -b bunstart.watch.ts"
   },
+  "dependencies": {
+    "@bunstart/pack": "workspace:*"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },

@@ -1,0 +1,34 @@
+/**
+ * Build script: compiles TypeScript and emits declaration files.
+ * Uses @bunstart/pack (via core/) to build itself.
+ */
+import isolatedDecl from 'bun-plugin-isolated-decl';
+import { buildSetting } from './core';
+
+export async function build(): Promise<void> {
+	console.log('Building...');
+
+	const { build: packBuild } = buildSetting({
+		entrypoints: ['src/index.ts'],
+		outdir: 'dist',
+		target: 'bun',
+		format: 'esm',
+		minify: true,
+		sourcemap: false,
+		plugins: [isolatedDecl()],
+	});
+
+	await packBuild();
+
+	console.log('Build completed');
+}
+
+const isMain =
+	process.argv[1]?.endsWith('bunstart.build.ts') ||
+	process.argv[1]?.endsWith('bunstart.build.js');
+if (isMain) {
+	build().catch((e) => {
+		console.error('Build failed', e);
+		process.exit(1);
+	});
+}

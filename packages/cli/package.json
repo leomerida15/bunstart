@@ -31,12 +31,15 @@
   },
   "devDependencies": {
     "@types/bun": "1.3.10",
+    "@types/node": "^25.6.0",
+    "bun-types": "^1.3.13",
     "type-fest": "^5.4.4"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
+    "@bunstart/pack": "workspace:*",
     "enquirer": "^2.4.1"
   },
   "private": false

@@ -1,0 +1,20 @@
+version: "1.0"
+project: bunstart
+artifactStore: hybrid  # Guarda en engram y openspec
+
+defaults:
+  domain: pack
+  artifactStore: hybrid
+
+domains:
+  - name: pack
+    description: "@bunstart/pack - Build engine para Bunstart"
+    sourceOfTruth: openspec/specs/pack/spec.md
+  - name: cli
+    description: "@bunstart/cli - CLI para inicialización y manejo de monorepos"
+    sourceOfTruth: openspec/specs/cli/spec.md
+
+rules:
+  archive:
+    dateFormat: YYYY-MM-DD
+    includeObservations: true
