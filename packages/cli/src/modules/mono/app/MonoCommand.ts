@@ -15,6 +15,7 @@ import type { AddWorkspaceDepUseCase } from './use-cases/AddWorkspaceDepUseCase'
 import type { RemoveWorkspaceDepUseCase } from './use-cases/RemoveWorkspaceDepUseCase';
 import type { RunBunInstallPort } from '../domain/ports/RunBunInstall.port';
 import type { AdoptProjectUseCase } from './use-cases/AdoptProjectUseCase';
+import type { MigrateToPackUseCase } from './use-cases/MigrateToPackUseCase';
 import type { CreateMonoRepoUseCase } from './use-cases/CreateMonoRepoUseCase';
 import type { MigrateMonoRepoUseCase } from './use-cases/MigrateMonoRepoUseCase';
 import type { SelectTemplateUseCase } from '../../init/app/use-cases/SelectTemplateUseCase';
@@ -40,6 +41,7 @@ export interface MonoCommandProps {
 	removeWorkspaceDep: RemoveWorkspaceDepUseCase;
 	runBunInstall: RunBunInstallPort;
 	adoptProject: AdoptProjectUseCase;
+	migrateToPack: MigrateToPackUseCase;
 	scaffolder: MonorepoScaffolderPort;
 	createMonoRepo: CreateMonoRepoUseCase;
 	migrateMonoRepo: MigrateMonoRepoUseCase;
@@ -73,6 +75,7 @@ export class MonoCommand {
 	private readonly removeWorkspaceDep: RemoveWorkspaceDepUseCase;
 	private readonly runBunInstall: RunBunInstallPort;
 	private readonly adoptProject: AdoptProjectUseCase;
+	private readonly migrateToPack: MigrateToPackUseCase;
 	private readonly scaffolder: MonorepoScaffolderPort;
 	private readonly createMonoRepo: CreateMonoRepoUseCase;
 	private readonly migrateMonoRepo: MigrateMonoRepoUseCase;
@@ -98,6 +101,7 @@ export class MonoCommand {
 		removeWorkspaceDep,
 		runBunInstall,
 		adoptProject,
+		migrateToPack,
 		scaffolder,
 		createMonoRepo,
 		migrateMonoRepo,
@@ -122,6 +126,7 @@ export class MonoCommand {
 		this.removeWorkspaceDep = removeWorkspaceDep;
 		this.runBunInstall = runBunInstall;
 		this.adoptProject = adoptProject;
+		this.migrateToPack = migrateToPack;
 		this.scaffolder = scaffolder;
 		this.createMonoRepo = createMonoRepo;
 		this.migrateMonoRepo = migrateMonoRepo;
@@ -149,6 +154,11 @@ export class MonoCommand {
 
 		if (subcommand === 'migrate') {
 			await this.migrateMonoRepo.execute(process.cwd());
+			return;
+		}
+
+		if (subcommand === 'migrate-pack') {
+			await this.handleMigratePack(extraArgs);
 			return;
 		}
 
@@ -467,8 +477,62 @@ export class MonoCommand {
 
 	private printAdoptUsage(): void {
 		console.error(
-			'Usage: buns mono adopt app <name> [--from <path>] | buns mono adopt pkg <name> [--from <path>]'
+			'Usage: buns mono adopt app <name> [--from <path>]\n' +
+			'       buns mono adopt pkg <name> [--from <path>]\n' +
+			'\n' +
+			'Adopts an existing workspace into the monorepo with @bunstart/pack integration.\n' +
+			'If --from is not provided, the workspace must already exist in apps/ or packages/.\n' +
+			'Pack configuration is automatically applied to all adopted workspaces.'
 		);
+	}
+
+	private async handleMigratePack(args: string[]): Promise<void> {
+		if (args.length < 1) {
+			console.error(
+				'Usage: buns mono migrate-pack <alias>\n' +
+				'\n' +
+				'Migrates an existing workspace to use @bunstart/pack.\n' +
+				'The workspace must already exist in apps/ or packages/.\n' +
+				'Adds @bunstart/pack dependency and creates bunstart.config.ts with pack section.'
+			);
+			process.exit(1);
+		}
+
+		const alias = args[0]!;
+		const cwd = process.cwd();
+
+		// Determine if it's an app or package by checking which directory exists
+		const appPath = join(cwd, 'apps', alias);
+		const pkgPath = join(cwd, 'packages', alias);
+
+		let workspacePath: string;
+		let workspaceType: string;
+
+		try {
+			await this.filesystem.existsDir(appPath);
+			workspacePath = appPath;
+			workspaceType = 'app';
+		} catch {
+			try {
+				await this.filesystem.existsDir(pkgPath);
+				workspacePath = pkgPath;
+				workspaceType = 'package';
+			} catch {
+				console.error(`Workspace "${alias}" not found in apps/ or packages/.`);
+				process.exit(1);
+			}
+		}
+
+		console.log(`[migrate-pack] Migrating ${workspaceType} "${alias}" to @bunstart/pack...`);
+
+		try {
+			await this.migrateToPack.execute(workspacePath, true);
+			await this.runBunInstall.execute(cwd);
+			console.log(`\n✅ Migrated ${workspaceType} "${alias}" to @bunstart/pack.`);
+		} catch (err) {
+			console.error(err instanceof Error ? err.message : String(err));
+			process.exit(1);
+		}
 	}
 
 	private parseAddDepFlags(args: string[]): {
@@ -561,6 +625,7 @@ export class MonoCommand {
 		console.log('\nUsage: buns mono <subcommand> [options]');
 		console.log('       buns mono create [name]     Create a new project directory and run init inside it');
 		console.log('       buns mono migrate           Migrate an existing monorepo to bunstart structure');
+		console.log('       buns mono migrate-pack <alias>  Migrate workspace to use @bunstart/pack');
 		console.log(
 			'       buns mono generate app <name>   Generate and register a new app (alias: gen)'
 		);

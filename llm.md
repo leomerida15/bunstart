@@ -12,12 +12,11 @@ Bunstart is a comprehensive ecosystem for managing Bun.js projects. It provides 
 - **Application**: Use Cases that orchestrate domain logic (e.g., `BuildWorkspace`, `SyncDependencies`).
 - **Infrastructure**: Concrete implementations (Adapters) for Filesystem, Bun CLI, and process management.
 
-### Development Pillars
-- **Clean Code**: High readability, meaningful naming, and single-responsibility functions.
-- **Documentation**:
-  - **API**: OpenAPI for all REST endpoints.
-  - **Code**: Comprehensive JSDoc for all public methods and types.
-- **Build System**: Native `Bun.build` integrated into `bunstart.build.ts` (build) and `bunstart.watch.ts` (watch).
+### Build System: @bunstart/pack
+- **Native Bun**: Uses `Bun.build`, `Bun.serve`, and `Bun.watch` natively via the `@bunstart/pack` library.
+- **DTS Optimization**: Uses `isolatedDeclarations` for ultra-fast type generation.
+- **Smart Watch**: CLI uses a reverse dependency graph for incremental rebuilds.
+- **Asset Management**: Automatic hash injection in HTML and public asset management for production builds.
 
 ---
 

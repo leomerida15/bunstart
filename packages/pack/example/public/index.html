@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>bunstart/pack Demo</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    h1 { color: #ff6b6b; }
+    .card {
+      background: #16213e;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    button {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover { background: #ff8787; }
+    #result { margin-top: 20px; font-size: 24px; color: #4ecdc4; }
+  </style>
+</head>
+<body>
+  <h1>🚀 @bunstart/pack Demo</h1>
+  
+  <div class="card">
+    <h2>Greet</h2>
+    <input type="text" id="name" placeholder="Tu nombre" value="Bunstart">
+    <button onclick="testGreet()">Saludar</button>
+    <div id="greet-result"></div>
+  </div>
+
+  <div class="card">
+    <h2>Calculator</h2>
+    <p>5 + 3 - 2 = <span id="calc-result">?</span></p>
+    <button onclick="testCalc()">Calcular</button>
+  </div>
+
+  <script type="module" src="/index.js"></script>
+  
+  <script>
+    // Estos se cargan desde el bundle generado
+    async function testGreet() {
+      const name = document.getElementById('name').value;
+      const result = greet(name); // desde bundle
+      document.getElementById('greet-result').textContent = result;
+    }
+
+    async function testCalc() {
+      // Import dinámico del bundle
+      const { Calculator } = await import('/index.js');
+      const calc = new Calculator();
+      calc.add(5).subtract(2).add(3);
+      document.getElementById('calc-result').textContent = calc.getValue();
+    }
+    
+    // Test inicial
+    testCalc();
+  </script>
+</body>
+</html>
