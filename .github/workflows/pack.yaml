@@ -2,7 +2,7 @@ name: Deploy Pack Package
 
 on:
     push:
-        branches: [build/main]
+        branches: [pack/main]
 
 jobs:
     deploy:
