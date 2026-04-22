@@ -58,9 +58,13 @@
 ## Phase 3: migrate-pack
 
 ### 3.1 Agregar subcomando migrate-pack
-- [ ] Modificar `packages/cli/src/modules/mono/app/MonoCommand.ts`
+- [x] Modificar `packages/cli/src/modules/mono/app/MonoCommand.ts`
   - Agregar handler para `subcommand === 'migrate-pack'`
+  - Agregar método `handleMigratePack()` que recibe alias y migra el workspace
+  - Actualizar `showUsage()` para incluir migrate-pack
   - Reutilizar `MigrateToPackUseCase`
+- [x] Modificar `packages/cli/src/modules/mono/infra/factories/MonoCommandFactory.ts`
+  - Inyectar `migrateToPack` en `MonoCommand`
 
 ---
 

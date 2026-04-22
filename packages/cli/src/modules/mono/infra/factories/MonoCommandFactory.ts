@@ -136,6 +136,7 @@ export class MonoCommandFactory {
 			removeWorkspaceDep: this.removeWorkspaceDep,
 			runBunInstall,
 			adoptProject,
+			migrateToPack,
 			scaffolder,
 			createMonoRepo,
 			migrateMonoRepo,
