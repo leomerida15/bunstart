@@ -160,7 +160,7 @@ export class ApplyBunstartRulesAdapter implements ApplyBunstartRulesPort {
 			types: 'dist/index.d.ts',
 			dependencies: {
 				...existingDeps,
-				'@bunstart/pack': options?.isMonorepoWorkspace ? 'workspace:*' : '^0.0.1'
+				'@bunstart/pack': options?.isMonorepoWorkspace ? 'workspace:*' : '^0.2.2'
 			}
 		};
 		if (options?.projectName !== undefined) {
