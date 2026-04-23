@@ -1,34 +1,34 @@
 {
-  "name": "@bunstart/pack",
-  "module": "dist/index.js",
-  "type": "module",
-  "files": [
-    "dist",
-    "LICENSE"
-  ],
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "devDependencies": {
-    "@types/node": "^25.6.0",
-    "bun-plugin-isolated-decl": "^0.2.9",
-    "bun-types": "^1.3.13"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "scripts": {
-    "build": "bun run -b bunstart.build.ts",
-    "watch": "bun run -b bunstart.watch.ts",
-    "dev": "bun run watch",
-    "start": "bun src/index.ts",
-    "example": "bun run example/dev.ts"
-  },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "version": "0.2.2",
-  "license": "Apache-2.0"
+	"name": "@bunstart/pack",
+	"module": "dist/index.js",
+	"type": "module",
+	"files": [
+		"dist",
+		"LICENSE"
+	],
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"devDependencies": {
+		"@types/node": "^25.6.0",
+		"bun-plugin-isolated-decl": "^0.2.9",
+		"bun-types": "^1.3.13"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"scripts": {
+		"build": "bun run -b bunstart.build.ts",
+		"watch": "bun run -b bunstart.watch.ts",
+		"dev": "bun run watch",
+		"start": "bun src/index.ts",
+		"example": "bun run example/dev.ts"
+	},
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"version": "0.2.4",
+	"license": "Apache-2.0"
 }
