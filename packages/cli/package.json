@@ -1,48 +1,48 @@
 {
-  "type": "module",
-  "version": "0.6.8",
-  "name": "@bunstart/cli",
-  "license": "Apache-2.0",
-  "module": "dist/index.js",
-  "files": [
-    "dist",
-    "LICENSE"
-  ],
-  "bin": {
-    "bunstart": "./dist/index.js",
-    "buns": "./dist/index.js"
-  },
-  "exports": {
-    ".": "./dist/index.js"
-  },
-  "author": {
-    "name": "leomerida15",
-    "email": "dimasmerida15@gmail.com",
-    "url": "https://github.com/leomerida15"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/leomerida15/bunstart"
-  },
-  "scripts": {
-    "build": "bun run bunstart.build.ts",
-    "dev": "bun run bunstart.watch.ts",
-    "start": "bun run dist/index.js",
-    "type:check": "bun run -b tsc --noEmit",
-    "type:watch": "bun run -b tsc --noEmit --watch"
-  },
-  "devDependencies": {
-    "@bunstart/pack": "workspace:*",
-    "@types/bun": "1.3.10",
-    "@types/node": "^25.6.0",
-    "bun-types": "^1.3.13",
-    "type-fest": "^5.4.4"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "dependencies": {
-    "enquirer": "^2.4.1"
-  },
-  "private": false
+	"type": "module",
+	"version": "0.6.10",
+	"name": "@bunstart/cli",
+	"license": "Apache-2.0",
+	"module": "dist/index.js",
+	"files": [
+		"dist",
+		"LICENSE"
+	],
+	"bin": {
+		"bunstart": "./dist/index.js",
+		"buns": "./dist/index.js"
+	},
+	"exports": {
+		".": "./dist/index.js"
+	},
+	"author": {
+		"name": "leomerida15",
+		"email": "dimasmerida15@gmail.com",
+		"url": "https://github.com/leomerida15"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/leomerida15/bunstart"
+	},
+	"scripts": {
+		"build": "bun run bunstart.build.ts",
+		"dev": "bun run bunstart.watch.ts",
+		"start": "bun run dist/index.js",
+		"type:check": "bun run -b tsc --noEmit",
+		"type:watch": "bun run -b tsc --noEmit --watch"
+	},
+	"devDependencies": {
+		"@bunstart/pack": "workspace:*",
+		"@types/bun": "1.3.10",
+		"@types/node": "^25.6.0",
+		"bun-types": "^1.3.13",
+		"type-fest": "^5.4.4"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"enquirer": "^2.4.1"
+	},
+	"private": false
 }
