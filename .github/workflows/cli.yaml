@@ -27,13 +27,6 @@ jobs:
             - name: 📥 Install dependencies
               run: bun install
 
-            - name: 🔄 Replace latest with actual version
-              run: |
-                  VERSION=$(npm view @bunstart/pack version)
-                  echo "Using @bunstart/pack version: $VERSION"
-                  sed -i "s/\"latest\"/\"^$VERSION\"/g" packages/cli/package.json
-                  bun install
-
             - name: 🛠️ Build packages
               run: |
                   bun run --filter '@bunstart/pack' build

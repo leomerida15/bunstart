@@ -3,7 +3,7 @@ import { InitCommandFactory } from './modules/init/infra/factories/InitCommandFa
 import { CreateCommandFactory } from './modules/init/infra/factories/CreateCommandFactory';
 import { MonoCommandFactory } from './modules/mono/infra/factories/MonoCommandFactory';
 import { isNativeBunCommand } from './modules/mono/domain/services/NativeBunCommands';
-
+import pk from '../package.json';
 /**
  * Displays the help message for the CLI.
  */
@@ -47,7 +47,7 @@ Examples:
  * @returns {void}
  */
 function showVersion(): void {
-	console.log('bunstart CLI v0.4.4');
+	console.log(`bunstart CLI v${pk.version}`);
 }
 
 /**
@@ -104,9 +104,7 @@ async function main(): Promise<void> {
 
 			case 'create': {
 				if (commandArgs.includes('--help') || commandArgs.includes('-h')) {
-					const { CreateCommand } = await import(
-						'./modules/init/app/CreateCommand'
-					);
+					const { CreateCommand } = await import('./modules/init/app/CreateCommand');
 					console.log(CreateCommand.getHelp());
 					return;
 				}
@@ -126,8 +124,7 @@ async function main(): Promise<void> {
 					process.exit(1);
 				}
 				// Try run: buns <alias> [...commands] when in a monorepo with package.json workspaces
-				const resolveWorkspaces =
-					MonoCommandFactory.createResolveWorkspacesAdapter();
+				const resolveWorkspaces = MonoCommandFactory.createResolveWorkspacesAdapter();
 				const workspaces = await resolveWorkspaces.resolve(process.cwd());
 				const isAlias = workspaces.some((w) => w.id === command);
 				if (isAlias) {
@@ -145,22 +142,15 @@ async function main(): Promise<void> {
 						const ensureConfigSynced =
 							MonoCommandFactory.createEnsureConfigSyncedUseCase();
 						await ensureConfigSynced.execute(cwd);
-						const ensureDepsBuilt =
-							MonoCommandFactory.createEnsureDepsBuiltUseCase();
+						const ensureDepsBuilt = MonoCommandFactory.createEnsureDepsBuiltUseCase();
 						await ensureDepsBuilt.execute(cwd, command);
 					}
 					const runInWorkspace = MonoCommandFactory.createRunInWorkspaceUseCase();
 					// Native bun commands: no "run" prefix. Scripts: prepend "run"
 					let runArgs: string[];
-					if (
-						commandArgs.length > 0 &&
-						isNativeBunCommand(commandArgs[0] as string)
-					) {
+					if (commandArgs.length > 0 && isNativeBunCommand(commandArgs[0] as string)) {
 						runArgs = commandArgs;
-					} else if (
-						commandArgs.length > 0 &&
-						commandArgs[0] !== 'run'
-					) {
+					} else if (commandArgs.length > 0 && commandArgs[0] !== 'run') {
 						runArgs = ['run', ...commandArgs];
 					} else {
 						runArgs = commandArgs;
