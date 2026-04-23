@@ -32,8 +32,8 @@
 		"type:watch": "bun run -b tsc --noEmit --watch"
 	},
 	"devDependencies": {
-		"@bunstart/pack": "latest",
-		"@types/bun": "1.3.10",
+		"@bunstart/pack": "workspace:*",
+		"@types/bun": "^1.3.13",
 		"@types/node": "^25.6.0",
 		"bun-types": "^1.3.13",
 		"type-fest": "^5.4.4"
