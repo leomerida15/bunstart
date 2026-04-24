@@ -73,10 +73,37 @@ export class BunServeAdapter implements DevServerPort {
 				const exists = await file.exists();
 				if (exists) {
 					const headers = new Headers();
+
+					// ✅ FIX: Compress the file for real when compress is enabled
 					if (config.compress) {
-						headers.set('Content-Encoding', 'gzip');
+						try {
+							// Read the file as ArrayBuffer
+							const arrayBuffer = await file.arrayBuffer();
+
+							// Convert to Uint8Array for Bun.gzipSync()
+							const uint8Data = new Uint8Array(arrayBuffer);
+
+							// Compress with gzip
+							const compressed = Bun.gzipSync(uint8Data);
+
+							// Set appropriate headers
+							headers.set('Content-Encoding', 'gzip');
+							headers.set('Content-Length', compressed.byteLength.toString());
+
+							// Return response with compressed data
+							return new Response(compressed, {
+								headers: {
+									'Content-Type': this.getContentType(filePath),
+									...Object.fromEntries(headers),
+								},
+							});
+						} catch (error) {
+							console.error('[DevServer] Compression failed:', error);
+							// Fall through to send uncompressed
+						}
 					}
 
+					// Send uncompressed (either compress is false or compression failed)
 					return new Response(file, {
 						headers: {
 							'Content-Type': this.getContentType(filePath),
