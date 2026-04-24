@@ -56,10 +56,7 @@ export class SyncDependsOnFromPackageJsonUseCase {
 
 		const depIds = new Set<string>();
 		for (const key of [
-			...(Object.keys((pkg.dependencies as Record<string, string>) ?? {})),
-			...(Object.keys((pkg.devDependencies as Record<string, string>) ?? {})),
-			...(Object.keys((pkg.peerDependencies as Record<string, string>) ?? {})),
-			...(Object.keys((pkg.optionalDependencies as Record<string, string>) ?? {}))
+			...(Object.keys((pkg.dependencies as Record<string, string>) ?? {}))
 		]) {
 			const id = nameToId.get(key);
 			if (id && id !== workspaceId) depIds.add(id);

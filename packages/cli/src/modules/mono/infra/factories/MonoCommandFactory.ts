@@ -25,6 +25,12 @@ import { MigrateMonoRepoUseCase } from '../../app/use-cases/MigrateMonoRepoUseCa
 import { EnquirerAdapter } from '../../../init/infra/adapters/EnquirerAdapter';
 import { MonorepoScaffolderAdapter } from '../../../init/infra/adapters/MonorepoScaffolderAdapter';
 
+// Pack incremental-build imports
+import { CheckIfRebuildNeededUseCase } from '@bunstart/pack/src/modules/incremental-build/app/use-cases/CheckIfRebuildNeededUseCase';
+import { UpdateCacheUseCase } from '@bunstart/pack/src/modules/incremental-build/app/use-cases/UpdateCacheUseCase';
+import { Sha256HashAdapter } from '@bunstart/pack/src/modules/incremental-build/infra/adapters/Sha256HashAdapter';
+import { DiskCacheAdapter } from '@bunstart/pack/src/modules/incremental-build/infra/adapters/DiskCacheAdapter';
+
 /**
  * Factory for creating MonoCommand instances and mono use cases with proper dependency injection.
  */
@@ -39,6 +45,16 @@ export class MonoCommandFactory {
 		loadConfig: this.loadConfig
 	});
 	private static syncStateAdapter = new SyncStateFileAdapter();
+	private static hashAdapter = new Sha256HashAdapter();
+	private static diskCacheAdapter = new DiskCacheAdapter();
+	private static checkIfRebuildNeeded = new CheckIfRebuildNeededUseCase({
+		hashCalculator: this.hashAdapter,
+		cacheStorage: this.diskCacheAdapter
+	});
+	private static updateCache = new UpdateCacheUseCase({
+		hashCalculator: this.hashAdapter,
+		cacheStorage: this.diskCacheAdapter
+	});
 	private static syncDependsOn = new SyncDependsOnFromPackageJsonUseCase({
 		resolveWorkspaces: this.resolveWorkspacesAdapter,
 		loadConfig: this.loadConfig,
@@ -152,7 +168,9 @@ export class MonoCommandFactory {
 	public static createEnsureDepsBuiltUseCase(): EnsureDepsBuiltUseCase {
 		return new EnsureDepsBuiltUseCase({
 			resolveWorkspaces: this.resolveWorkspacesAdapter,
-			buildWorkspace: this.buildAdapter
+			buildWorkspace: this.buildAdapter,
+			checkIfRebuildNeeded: this.checkIfRebuildNeeded,
+			updateCache: this.updateCache
 		});
 	}
 
