@@ -10,7 +10,7 @@
     "dev": "bun run watch"
   },
   "dependencies": {
-    "@bunstart/pack": "workspace:*",
+    "@bunstart/pack": "^0.2.2",
     "@{{ALIAS}}/pkg-example": "workspace:*"
   },
   "devDependencies": {

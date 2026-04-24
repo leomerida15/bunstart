@@ -60,7 +60,7 @@ export class MigrateToPackUseCase {
 			return;
 		}
 
-		const packVersion = isMonorepoWorkspace ? 'workspace:*' : '^0.0.1';
+		const packVersion = isMonorepoWorkspace ? 'workspace:*' : '^0.2.2';
 
 		await this.packageJson.patch(pkgPath, {
 			dependencies: {
